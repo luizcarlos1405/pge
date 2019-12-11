@@ -1,0 +1,250 @@
+[gd_scene load_steps=20 format=2]
+
+[ext_resource path="res://PGEBase/GodotAlienTheme.tres" type="Theme" id=1]
+[ext_resource path="res://PGEBase/PGEEditor/PGEEditor.gd" type="Script" id=2]
+[ext_resource path="res://PGEBase/icons/zoom_less.svg" type="Texture" id=3]
+[ext_resource path="res://PGEBase/icons/zoom_reset.svg" type="Texture" id=4]
+[ext_resource path="res://PGEBase/icons/zoom_more.svg" type="Texture" id=5]
+[ext_resource path="res://PGEBase/PGEEditor/Messages.gd" type="Script" id=6]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.113725, 0.133333, 0.152941, 1 )
+
+[sub_resource type="InputEventKey" id=2]
+control = true
+command = true
+pressed = true
+scancode = 65
+
+[sub_resource type="ShortCut" id=3]
+shortcut = SubResource( 2 )
+
+[sub_resource type="InputEventKey" id=4]
+control = true
+command = true
+pressed = true
+scancode = 83
+
+[sub_resource type="ShortCut" id=5]
+shortcut = SubResource( 4 )
+
+[sub_resource type="InputEventKey" id=6]
+control = true
+command = true
+pressed = true
+scancode = 76
+
+[sub_resource type="ShortCut" id=7]
+shortcut = SubResource( 6 )
+
+[sub_resource type="InputEventKey" id=8]
+control = true
+command = true
+pressed = true
+scancode = 69
+
+[sub_resource type="ShortCut" id=9]
+shortcut = SubResource( 8 )
+
+[sub_resource type="InputEventKey" id=10]
+pressed = true
+scancode = 16777224
+
+[sub_resource type="ShortCut" id=11]
+shortcut = SubResource( 10 )
+
+[sub_resource type="StyleBoxFlat" id=12]
+content_margin_left = 20.0
+content_margin_right = 20.0
+bg_color = Color( 0.113725, 0.133333, 0.152941, 0.733333 )
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="Animation" id=13]
+length = 0.5
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:rect_scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.5 ),
+"transitions": PoolRealArray( 0.307786, 1 ),
+"update": 0,
+"values": [ Vector2( 0.926261, 0.768455 ), Vector2( 1, 1 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath(".:self_modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.5 ),
+"transitions": PoolRealArray( 0.378929, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 1 ) ]
+}
+
+[node name="GraphEditor" type="Control"]
+show_behind_parent = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource( 1 )
+script = ExtResource( 2 )
+
+[node name="FileDialog" type="FileDialog" parent="."]
+margin_left = 171.0
+margin_top = 129.0
+margin_right = 812.0
+margin_bottom = 475.0
+popup_exclusive = true
+window_title = "Save Graph"
+resizable = true
+filters = PoolStringArray( "*.tres" )
+
+[node name="Header" type="Panel" parent="."]
+anchor_right = 1.0
+margin_bottom = 26.0
+mouse_filter = 2
+custom_styles/panel = SubResource( 1 )
+
+[node name="Items" type="HBoxContainer" parent="Header"]
+editor/display_folded = true
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+margin_left = 4.0
+margin_top = -12.0
+margin_right = -4.0
+margin_bottom = 12.0
+
+[node name="GraphName" type="Label" parent="Header/Items"]
+margin_top = 1.0
+margin_right = 60.0
+margin_bottom = 23.0
+text = "Untitled"
+
+[node name="VSeparator" type="VSeparator" parent="Header/Items"]
+margin_left = 64.0
+margin_right = 68.0
+margin_bottom = 24.0
+
+[node name="AddNodeButton" type="Button" parent="Header/Items"]
+margin_left = 72.0
+margin_right = 147.0
+margin_bottom = 24.0
+focus_mode = 0
+shortcut = SubResource( 3 )
+text = "Add Node"
+
+[node name="SaveButton" type="Button" parent="Header/Items"]
+margin_left = 151.0
+margin_right = 192.0
+margin_bottom = 24.0
+focus_mode = 0
+shortcut = SubResource( 5 )
+text = "Save"
+
+[node name="LoadButton" type="Button" parent="Header/Items"]
+margin_left = 196.0
+margin_right = 238.0
+margin_bottom = 24.0
+focus_mode = 0
+shortcut = SubResource( 7 )
+text = "Load"
+
+[node name="ExportButton" type="Button" parent="Header/Items"]
+visible = false
+margin_left = 261.0
+margin_right = 313.0
+margin_bottom = 22.0
+focus_mode = 0
+shortcut = SubResource( 9 )
+text = "Export"
+
+[node name="DeleteButton" type="Button" parent="Header/Items"]
+margin_left = 242.0
+margin_right = 297.0
+margin_bottom = 24.0
+focus_mode = 0
+shortcut = SubResource( 11 )
+text = "Delete"
+
+[node name="VSeparator2" type="VSeparator" parent="Header/Items"]
+margin_left = 301.0
+margin_right = 305.0
+margin_bottom = 24.0
+
+[node name="ZoomOut" type="Button" parent="Header/Items"]
+margin_left = 309.0
+margin_right = 337.0
+margin_bottom = 24.0
+focus_mode = 0
+icon = ExtResource( 3 )
+
+[node name="ZoomReset" type="Button" parent="Header/Items"]
+margin_left = 341.0
+margin_right = 369.0
+margin_bottom = 24.0
+focus_mode = 0
+icon = ExtResource( 4 )
+
+[node name="ZoomIn" type="Button" parent="Header/Items"]
+margin_left = 373.0
+margin_right = 401.0
+margin_bottom = 24.0
+focus_mode = 0
+icon = ExtResource( 5 )
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_top = 26.0
+mouse_filter = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Panel" type="Panel" parent="ScrollContainer"]
+editor/display_folded = true
+margin_right = 1024.0
+margin_bottom = 574.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Edges" type="Control" parent="ScrollContainer/Panel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Nodes" type="Control" parent="ScrollContainer/Panel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Messages" type="Label" parent="."]
+self_modulate = Color( 1, 1, 1, 0 )
+anchor_right = 1.0
+margin_left = 454.0
+margin_top = 30.0
+margin_right = -454.0
+margin_bottom = 52.0
+grow_horizontal = 2
+grow_vertical = 2
+rect_scale = Vector2( 0.926261, 0.768455 )
+rect_pivot_offset = Vector2( 58, 11 )
+custom_styles/normal = SubResource( 12 )
+text = "Message"
+align = 1
+valign = 1
+script = ExtResource( 6 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Messages"]
+anims/show_message = SubResource( 13 )
+
+[node name="Timer" type="Timer" parent="Messages"]
+wait_time = 3.0
+one_shot = true
