@@ -1,15 +1,15 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://PGEBase/PGEBlock/PGEBlockPanelNormal.tres" type="StyleBox" id=1]
 [ext_resource path="res://PGEBase/PGEBlock/PGEBlock.gd" type="Script" id=2]
 [ext_resource path="res://PGEBase/GodotAlienTheme.tres" type="Theme" id=3]
-[ext_resource path="res://PGEBase/PGESlot/PGESlot.tscn" type="PackedScene" id=4]
 
 [node name="PGEBlock" type="PanelContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_right = -944.0
 margin_bottom = -582.0
+rect_min_size = Vector2( 0, 20 )
 focus_mode = 1
 custom_styles/panel = ExtResource( 1 )
 script = ExtResource( 2 )
@@ -26,13 +26,14 @@ items = [ "Swap slot side", null, 0, false, false, -1, 0, null, "", false, "Dele
 margin_left = 2.0
 margin_top = 2.0
 margin_right = 78.0
-margin_bottom = 16.0
+margin_bottom = 18.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_constants/separation = 0
 
 [node name="Content" type="PanelContainer" parent="Parts"]
-margin_right = 58.0
-margin_bottom = 14.0
+margin_right = 62.0
+margin_bottom = 16.0
 mouse_filter = 1
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -41,18 +42,15 @@ theme = ExtResource( 3 )
 [node name="Slots" type="VBoxContainer" parent="Parts"]
 margin_left = 62.0
 margin_right = 76.0
-margin_bottom = 14.0
-
-[node name="PGESlot" parent="Parts/Slots" instance=ExtResource( 4 )]
-mode = 2
-tangent_x_direction = 1
-color = Color( 1, 1, 1, 1 )
+margin_bottom = 16.0
+size_flags_vertical = 3
+custom_constants/separation = 0
 
 [node name="Resizer" type="Control" parent="."]
 margin_left = 2.0
-margin_top = 10.0
+margin_top = 12.0
 margin_right = 78.0
-margin_bottom = 16.0
+margin_bottom = 18.0
 rect_min_size = Vector2( 0, 6 )
 mouse_filter = 1
 mouse_default_cursor_shape = 9

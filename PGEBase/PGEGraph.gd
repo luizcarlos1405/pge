@@ -11,7 +11,7 @@ class_name PGEGraph
 			'blocks': [
 				{
 					'editor_data': Dictionary # filename, size and other editor informations
-					'connects_to': String, # If an empty String, it only carries data
+					'connections': Array, # If empty, it only carries data
 					'type': String, # Optional categorization of the block, defaults to 'none'
 					'data': Variant # data payload
 				},
@@ -42,86 +42,19 @@ var current_node: = {}
 var _default_type: = "None"
 
 
-# Building methods
-func add_node(name: String, data = null, editor_data: = {}) -> Dictionary:
-	if nodes.has(name):
-		print_debug("[ERROR]: node with name %s already exists." % name)
-		return {}
-
-	var new_node: = {
-		editor_data = editor_data,
-		data = data,
-		blocks = []
-	}
-
-	nodes[name] = new_node
-
-	return new_node
-
-
 func get_node(name: String) -> Dictionary:
 	if not nodes.has(name):
-		print_debug("[ERROR]: node with name %s not found." % name)
+		push_error("Node with name %s not found." % name)
 		return {}
 
 	return nodes[name]
-
-
-func remove_node(name: String) -> Dictionary:
-	if not nodes.has(name):
-		print_debug("[ERROR]: node with name %s not found." % name)
-		return {}
-
-	var node: Dictionary = nodes[name]
-	nodes.erase(name)
-
-	# Now check all connections to this node and delete them
-	for node_name in nodes:
-		var blocks: Array = nodes[node_name].blocks
-		for i in range(blocks.size() - 1, -1, -1):
-			if blocks[i].connects_to == name:
-				blocks.remove(i)
-
-	return node
-
-
-func add_block(
-		to_node: String,
-		connects_to: = "",
-		data = null,
-		editor_data: = {},
-		type: = _default_type
-	) -> Dictionary:
-
-	if has_connection(to_node, connects_to):
-		print_debug("[WARNING]: connection from %s to %s already exists. Block not added." % [to_node, connects_to])
-		return {}
-
-	var node: = get_node(to_node)
-	if node.empty():
-		return {}
-
-	var new_block: = {
-		connects_to = connects_to,
-		data = data,
-		editor_data = editor_data,
-		type = type
-	}
-
-	if not nodes.has(connects_to):
-		print_debug("[WARNING]: node with name %s not found. Connection not added.")
-		new_block.connects_to = ""
-
-	node.blocks.append(new_block)
-
-	return new_block
 
 
 func get_block(node_name: String, block_index: int) -> Dictionary:
 	var block_count: int = nodes[node_name].blocks.size()
 
 	if block_index >= block_count:
-		print_debug("[ERROR]: trying to get block with index %s from node with %s blocks" % [block_index, block_count])
+		push_error("Trying to get block with index %s from node with %s blocks" % [block_index, block_count])
 		return {}
 
 	return nodes[node_name].blocks[block_index]
@@ -131,7 +64,7 @@ func remove_block(node_name: String, block_index: int) -> Dictionary:
 	var block_count: int = nodes[node_name].blocks.size()
 
 	if block_index >= block_count:
-		print_debug("[ERROR]: trying to remove block with index %s from node with %s blocks" % [block_index, block_count])
+		push_error("Trying to remove block with index %s from node with %s blocks" % [block_index, block_count])
 		return {}
 
 	var block: Dictionary = nodes[node_name].blocks[block_index]
@@ -140,22 +73,6 @@ func remove_block(node_name: String, block_index: int) -> Dictionary:
 	return block
 
 
-func remove_connection(origin_node_name: String, target_node_name: String) -> Dictionary:
-	var origin_node: = get_node(origin_node_name)
-	if origin_node.empty():
-		return {}
-
-	for block in origin_node.blocks:
-		if block.connects_to == target_node_name:
-			origin_node.blocks.erase(block)
-			return block
-
-	print_debug("[ERROR]: triyng to delete a block that doesn't exist from %s to %s." % [origin_node_name, target_node_name])
-
-	return {}
-
-
-# Traversing methods
 func has_connection(from_node_name: String, to_node_name: String) -> bool:
 	if not from_node_name or not to_node_name:
 		return false
@@ -165,7 +82,7 @@ func has_connection(from_node_name: String, to_node_name: String) -> bool:
 		return false
 
 	for block in origin_node.blocks:
-		if block.connects_to == to_node_name:
+		if block.connections.has(to_node_name):
 			return true
 
 	return false
@@ -177,23 +94,30 @@ func go_to(node_name: String) -> Dictionary:
 	return current_node
 
 
-func next(block_index: int) -> Dictionary:
+func next(block_index: int, slot_index: = 0) -> Dictionary:
 	if current_node.empty():
-		print_debug("[ERROR]: current_node is empty. Dname you call start()?")
+		push_error("Current_node is empty. Dname you call start()?")
 		return {}
 
 	var block_count: int = current_node.blocks.size()
 
-	if block_index >= block_count:
-		print_debug("[WARNING]: trying call next in block with index %s but current node has %s blocks." % [block_index, block_count])
+	if block_count <= block_index:
+		push_warning("Tried to call next in block with index %s but current node has %s blocks." % [block_index, block_count])
 		return current_node
 
-	return go_to(current_node.blocks[block_index].connects_to)
+	var block: Dictionary = current_node.blocks[block_index]
+	var slots_count: int = block.connections.size()
+
+	if slots_count <= slot_index:
+		push_warning("Tried to access slot index %s on a block with %s slots" % [slot_index, slots_count])
+		return current_node
+
+	return go_to(block.connections[slot_index])
 
 
 func get_blocks_by_type(node: = current_node) -> Dictionary:
 	if node.empty():
-		print_debug("[ERROR]: node current_node empty.")
+		push_error("Node empty.")
 		return {}
 
 	var out: = {}
@@ -201,18 +125,12 @@ func get_blocks_by_type(node: = current_node) -> Dictionary:
 	for i in range(node.blocks.size()):
 		var block: Dictionary = node.blocks[i].duplicate()
 		block.index = i
-		if out.has(block.type):
-			out[block.type].append(block)
+		var type: String = block.get("type", _default_type)
+
+		if out.has(type):
+			out[type].append(block)
 
 		else:
-			out[block.type] = [block]
+			out[type] = [block]
 
 	return out
-
-
-func print_nodes() -> void:
-	for name in nodes:
-		print(name, ": ")
-		for block in nodes[name].blocks:
-			if block.connects_to:
-				print("|_", block.connects_to)

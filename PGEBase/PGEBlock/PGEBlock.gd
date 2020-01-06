@@ -13,18 +13,21 @@ extends PanelContainer
 """
 
 onready var content: PanelContainer = $Parts/Content
-onready var slot = $Parts/PGESlot
+onready var slots = $Parts/Slots
 
 enum SlotSide {LEFT, RIGHT}
 
 export var type := "None"
 export var max_per_node := 0 #TODO: implement max blocks cap on PGENode
-export var slot_active := true setget set_slot_active
+export(int, 0, 10) var slots_number: = 1 setget set_slots_number
+export var slots_colors: = PoolColorArray() setget set_slots_colors
 export var resizable := true
 export var can_be_deleted := true
 export(SlotSide) var slot_side := SlotSide.RIGHT setget set_slot_side
 export(StyleBox) var style_box_normal = preload("PGEBlockPanelNormal.tres")
 export(StyleBox) var style_box_focus = preload("PGEBlockPanelFocus.tres")
+
+const Slot: = preload("res://PGEBase/PGESlot/PGESlot.tscn")
 
 var resizing = false
 
@@ -32,7 +35,8 @@ var _reference_position: Vector2
 
 
 func _ready() -> void:
-	slot.set_visible(slot_active)
+	set_slots_number(slots_number)
+	set_slots_colors(slots_colors)
 
 	if not Engine.editor_hint:
 		$Resizer.set_visible(resizable)
@@ -75,7 +79,7 @@ func _on_PopupMenu_index_pressed(index: int) -> void:
 		1: # Delete
 			queue_free()
 		_:
-			print_debug("[WARNING]: nothing implemented for index %s." % index)
+			push_warning("Nothing implemented for index %s." % index)
 
 
 func _on_Resizer_gui_input(event: InputEvent) -> void:
@@ -91,45 +95,49 @@ func _on_Resizer_gui_input(event: InputEvent) -> void:
 			_reference_position = event.position
 
 
-func connect_to(node) -> void:
-	slot.connect_to(node.slot)
-	pass
-
-
-func set_slot_active(value: bool) -> void:
-	slot_active = value
-
-	if slot:
-		slot.set_visible(value)
-
-
-func set_slot_side(value: int) -> void:
-	slot_side = value
-
-	if slot:
-		if slot_side == SlotSide.LEFT:
-			$Parts.move_child(slot, 0)
-			slot.tangent_x_direction = -1
-
-		elif slot_side == SlotSide.RIGHT:
-			$Parts.move_child(slot, 2)
-			slot.tangent_x_direction = 1
+func connect_to(slot_index: int, pge_node) -> void:
+	slots.get_child(slot_index).connect_to(pge_node.slot)
 
 
 func serialize() -> Dictionary:
-	var connects_to: = ""
-	for edge in slot.edges:
-		if edge.from_slot == slot:
-			connects_to = edge.to_slot.controller.name
-
 	var data: = {
 		editor_data = get_editor_data(),
-		connects_to = connects_to,
+		connections = get_connections(),
 		type = type,
 		data = get_data()
 	}
 
 	return data
+
+
+func get_connections() -> Array:
+	var connections: = []
+	for slot in slots.get_children():
+		# Blocks slots should have only 1 connection from them
+		var edges_from_self: Array = slot.get_edges_from_self()
+		if not edges_from_self.empty():
+			var edge: PGEEdge = edges_from_self.front()
+			if edge:
+				connections.append(edge.to_slot.controller.name)
+#			else:
+#				connections.append("")
+
+	return connections
+
+
+func set_slot_side(value: int) -> void:
+	slot_side = value
+
+	if slots:
+		if slot_side == SlotSide.LEFT:
+			$Parts.move_child(slots, 0)
+			for slot in slots.get_children():
+				slot.tangent_x_direction = -1
+
+		elif slot_side == SlotSide.RIGHT:
+			$Parts.move_child(slots, 1)
+			for slot in slots.get_children():
+				slot.tangent_x_direction = 1
 
 
 func get_editor_data() -> Dictionary:
@@ -140,6 +148,51 @@ func get_editor_data() -> Dictionary:
 	}
 
 	return data
+
+
+func refresh_slots_edges() -> void:
+	for slot in slots.get_children():
+		slot.refresh_edges()
+
+
+func set_slots_controller(object: Object) -> void:
+	for slot in slots.get_children():
+		slot.controller = object
+
+
+func set_slots_edges_parent_path(node_path: NodePath) -> void:
+	for slot in slots.get_children():
+		slot.edges_parent_path = node_path
+
+	pass
+
+
+func set_slots_number(value: int) -> void:
+	slots_number = value
+
+	if slots:
+		var difference: = slots_number - slots.get_child_count() as int
+		if difference > 0:
+			for i in range(difference):
+				var new_slot: = Slot.instance()
+				# The slots owners are not set because of scene inheritance problems
+				# So they don't appear in the scene tree of the editor
+				slots.add_child(new_slot)
+
+		elif difference < 0:
+			var children: Array = slots.get_children()
+			for i in range(abs(difference)):
+				var child = children.pop_back()
+				child.queue_free()
+
+
+func set_slots_colors(value: PoolColorArray) -> void:
+	slots_colors = value
+
+	if slots:
+		var slots_to_color: int = min(slots.get_child_count(), slots_colors.size()) as int
+		for i in range(slots_to_color):
+			slots.get_child(i).color = slots_colors[i]
 
 
 func set_editor_data(data: Dictionary) -> void:

@@ -11,6 +11,7 @@ onready var nodes = $ScrollContainer/Panel/Nodes
 onready var edges = $ScrollContainer/Panel/Edges
 onready var _scroll_container_initial_size = scroll_container.rect_size
 
+export(GDScript) var graph_class: GDScript
 export(PackedScene) var pge_node_packed_scene = preload("../PGENode/PGENode.tscn")
 
 const SAVE_KEY = KEY_S
@@ -25,10 +26,11 @@ const POPUP_TITLES = {
 
 var panel_margin := 0
 
-var _graph: PGEGraph = preload("res://PGEBase/PGEGraph.gd").new()
 var _zoom_step := 0.1
 var _zoom_min := 0.2
 var _zoom_max := 5.0
+
+onready var _graph: PGEGraph = graph_class.new()
 
 
 func _ready():
@@ -239,11 +241,12 @@ func add_node_from_graph_recursive(graph: PGEGraph, node_data: Dictionary) -> No
 			pge_block.set_editor_data(block_data.editor_data)
 			pge_block.set_data(block_data.data)
 
-			if block_data.connects_to:
-				var connected_node_data: Dictionary = graph.nodes[block_data.connects_to]
+			for i in range(block_data.connections.size()):
+				var connection: String = block_data.connections[i]
+				var connected_node_data: Dictionary = graph.nodes[connection]
 
 				var connected_node = add_node_from_graph_recursive(graph, connected_node_data)
-				pge_block.connect_to(connected_node)
+				pge_block.connect_to(i, connected_node)
 
 	return pge_node
 

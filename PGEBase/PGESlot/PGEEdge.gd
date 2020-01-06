@@ -12,9 +12,11 @@ const MIN_X_BEZIER_TANGENT: = 30.0
 
 var from_slot setget set_from_slot
 var to_slot setget set_to_slot
+var from_slot_overwrite
 
 var connecting_slot # While still dragging, has the drag origin
 var _curve: = Curve2D.new()
+var _force_origin_point: = false
 
 
 func _ready() -> void:
@@ -81,11 +83,15 @@ func refresh() -> void:
 	var from_slot_direction := 0
 	var to_slot_direction := 0
 
-	if from_slot:
-		_curve.set_point_position(0, to_local(from_slot.get_global_position()) + from_slot.get_size() / 2.0)
-		from_slot_direction = from_slot.tangent_x_direction
+	if not from_slot_overwrite:
+		if from_slot:
+			_curve.set_point_position(0, to_local(from_slot.get_global_position()) + from_slot.get_size() / 2.0)
+			from_slot_direction = from_slot.tangent_x_direction
+		else:
+			_curve.set_point_position(0, get_global_mouse_position())
 	else:
-		_curve.set_point_position(0, get_global_mouse_position())
+		_curve.set_point_position(0, to_local(from_slot_overwrite.get_global_position()) + from_slot_overwrite.get_size() / 2.0)
+		from_slot_direction = from_slot_overwrite.tangent_x_direction
 
 	if to_slot:
 		_curve.set_point_position(1, to_local(to_slot.get_global_position()) + to_slot.get_size() / 2.0)

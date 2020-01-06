@@ -11,7 +11,7 @@ extends Button
 	usefull to better control the edge draw order.
 """
 
-enum Mode {BOTH, IN, OUT}
+enum Mode {BOTH, IN, OUT, NONE}
 enum TangentDirection {LEFT = -1, NONE = 0, RIGHT = 1}
 
 export(Mode) var mode = Mode.BOTH
@@ -46,6 +46,8 @@ func _on_edge_tree_exiting(edge) -> void:
 
 
 func start_connecting() -> PGEEdge:
+	if mode == Mode.NONE: return null
+
 	if max_connections:
 		if edges.size() >= max_connections:
 			return null
@@ -80,14 +82,13 @@ func connect_to(slot) -> void:
 	edge.refresh()
 
 
-func get_connections() -> Array:
-	var connections = []
+func get_edges_from_self() -> Array:
+	var edges_from_self: = []
+	for edge in edges:
+		if edge.from_slot == self:
+			edges_from_self.append(edge)
 
-	for child in get_children():
-		if child is PGEEdge:
-			connections.append(child.to_slot)
-
-	return connections
+	return edges_from_self
 
 
 func get_drag_data(position: Vector2) -> Object:
@@ -109,6 +110,11 @@ func can_drop_data(position: Vector2, edge: PGEEdge) -> bool:
 
 func drop_data(position: Vector2, edge: PGEEdge) -> void:
 	receive_connection(edge)
+
+
+func refresh_edges() -> void:
+	for edge in edges:
+		edge.refresh()
 
 
 func set_edges_parent(node: Node) -> void:

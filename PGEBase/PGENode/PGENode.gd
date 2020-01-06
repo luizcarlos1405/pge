@@ -9,11 +9,16 @@ extends PanelContainer
 
 signal moved
 signal released
+signal expanded
+signal collapsed
 
 onready var slot: = $Parts/Menu/PGESlot
+onready var collapsed_slot: = $Parts/Menu/CollapsedSlot
 onready var header: = $Parts/Header
 onready var blocks: = $Parts/Blocks
-onready var add_block_popup: PopupMenu = $Parts/Menu/AddBlockButton.get_popup()
+onready var toggle_collapse: = $Parts/Header/ToggleCollapse
+onready var add_block_button: MenuButton = $Parts/Menu/AddBlockButton
+onready var add_block_popup: PopupMenu = add_block_button.get_popup()
 onready var name_label: Label = $Parts/Header/Name
 
 enum SlotSide {LEFT, RIGHT}
@@ -43,6 +48,7 @@ func _ready() -> void:
 		connect("focus_exited", self, "_on_focus_exited")
 
 		$PopupMenu.connect("index_pressed", self, "_on_PopupMenu_index_pressed")
+		toggle_collapse.connect("toggled", self, "_on_ToggleCollapse_toggled")
 		header.connect("gui_input", self, "_on_Header_gui_input")
 		name_label.connect("text_entered", self, "_on_LineEdit_text_entered")
 		name_label.connect("focus_exited", self, "_on_LineEdit_focus_exited")
@@ -131,7 +137,15 @@ func _on_PopupMenu_index_pressed(index: int) -> void:
 			elif slot_side == SlotSide.RIGHT:
 				set_slot_side(SlotSide.LEFT)
 		_:
-			print_debug("[WARNING]: nothing implemented for index %s." % index)
+			push_warning("Nothing implemented for index %s." % index)
+
+
+func _on_ToggleCollapse_toggled(pressed: bool) -> void:
+	grab_focus()
+	if pressed:
+		collapse()
+	else:
+		expand()
 
 
 func _on_Header_gui_input(event: InputEvent) -> void:
@@ -229,8 +243,7 @@ func _on_moved() -> void:
 		edge.refresh()
 
 	for block in blocks.get_children():
-		for edge in block.slot.edges:
-			edge.refresh()
+		block.refresh_slots_edges()
 
 
 func serialize() -> Dictionary:
@@ -252,8 +265,8 @@ func add_block(packed_scene: PackedScene) -> Node:
 
 	new_block.connect("gui_input", self, "_on_block_gui_input", [new_block])
 	new_block.connect("tree_exiting", self, "_on_block_tree_exiting", [new_block])
-	new_block.slot.controller = self
-	new_block.slot.edges_parent_path = slot.edges_parent_path
+	new_block.set_slots_controller(self)
+	new_block.set_slots_edges_parent_path(slot.edges_parent_path)
 
 	return new_block
 
@@ -267,6 +280,33 @@ func move_to(position: Vector2) -> void:
 	rect_position = position
 	emit_signal("moved")
 	emit_signal("released")
+
+
+func collapse() -> void:
+	add_block_button.hide()
+	collapsed_slot.show()
+
+	for block in blocks.get_children():
+		block.hide()
+		for slot in block.slots.get_children():
+			for edge in slot.get_edges_from_self():
+				edge.from_slot_overwrite = collapsed_slot
+			slot.refresh_edges()
+
+	emit_signal("collapsed")
+
+
+func expand() -> void:
+	add_block_button.show()
+	collapsed_slot.hide()
+	for block in blocks.get_children():
+		block.show()
+		for slot in block.slots.get_children():
+			for edge in slot.get_edges_from_self():
+				edge.from_slot_overwrite = null
+			slot.refresh_edges()
+
+	emit_signal("expanded")
 
 
 func set_block_options(blocks_data: Array) -> void:
@@ -290,7 +330,8 @@ func get_editor_data() -> Dictionary:
 		rect_position = rect_position,
 		rect_size = rect_size,
 		slot_side = slot_side,
-		filename = filename
+		filename = filename,
+		collapsed = toggle_collapse.pressed
 	}
 
 	return editor_data
@@ -302,6 +343,8 @@ func set_editor_data(editor_data: Dictionary) -> void:
 	set_position(editor_data.rect_position)
 	set_size(editor_data.rect_size)
 	set_slot_side(editor_data.slot_side)
+	toggle_collapse.emit_signal("toggled", editor_data.collapsed)
+	toggle_collapse.pressed = editor_data.collapsed
 
 	name_label.text = name
 
@@ -313,8 +356,20 @@ func set_slot_side(value: int) -> void:
 	if menu and slot:
 		if slot_side == SlotSide.LEFT:
 			menu.move_child(slot, 0)
+			menu.move_child(collapsed_slot, 2)
+
+			slot.size_flags_horizontal = Control.SIZE_EXPAND
+			collapsed_slot.size_flags_horizontal = Control.SIZE_EXPAND + Control.SIZE_SHRINK_END
+
 			slot.tangent_x_direction = -1
+			collapsed_slot.tangent_x_direction = 1
 
 		elif slot_side == SlotSide.RIGHT:
-			menu.move_child(slot, 1)
+			menu.move_child(slot, 2)
+			menu.move_child(collapsed_slot, 0)
+
+			slot.size_flags_horizontal = Control.SIZE_EXPAND + Control.SIZE_SHRINK_END
+			collapsed_slot.size_flags_horizontal = Control.SIZE_EXPAND
+
 			slot.tangent_x_direction = 1
+			collapsed_slot.tangent_x_direction = -1
