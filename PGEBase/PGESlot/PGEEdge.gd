@@ -80,8 +80,8 @@ func connect_slots(start_slot, end_slot) -> void:
 
 # Recalculate the curve points of the connection line
 func refresh() -> void:
-	var from_slot_direction := 0
-	var to_slot_direction := 0
+	var from_slot_direction: = 0
+	var to_slot_direction: = 0
 
 	if not from_slot_overwrite:
 		if from_slot:

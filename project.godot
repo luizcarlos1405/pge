@@ -41,6 +41,10 @@ gdscript/warnings/return_value_discarded=false
 
 enabled=PoolStringArray( "todo" )
 
+[locale]
+
+translations=PoolStringArray( "res://locale/pt_BR.po" )
+
 [rendering]
 
 environment/default_environment="res://default_env.tres"

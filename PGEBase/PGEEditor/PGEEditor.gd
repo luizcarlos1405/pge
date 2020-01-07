@@ -18,17 +18,17 @@ const SAVE_KEY = KEY_S
 const LOAD_KEY = KEY_L
 const EXPORT_KEY = KEY_E
 const ADD_NODE_KEY = KEY_A
-const POPUP_TITLES = {
-	SAVE = "Save Graph",
-	LOAD = "Load Graph",
-	EXPORT = "Export Graph"
+
+var panel_margin: = 500
+
+var _popup_titles = {
+	"save": tr("Save Graph"),
+	"load": tr("Load Graph"),
+	"export": tr("Export Graph")
 }
-
-var panel_margin := 0
-
-var _zoom_step := 0.1
-var _zoom_min := 0.2
-var _zoom_max := 5.0
+var _zoom_step: = 0.1
+var _zoom_min: = 0.2
+var _zoom_max: = 5.0
 
 onready var _graph: PGEGraph = graph_class.new()
 
@@ -36,10 +36,12 @@ onready var _graph: PGEGraph = graph_class.new()
 func _ready():
 	panel.rect_min_size.x = OS.window_size.x
 	panel.rect_min_size.y = OS.window_size.y - $Header.rect_size.y
+	refresh_panel_size()
 
 	panel.connect("gui_input", self, "_on_Panel_gui_input")
 
 	$FileDialog.connect("file_selected", self, "_on_FileDialog_file_selected")
+	$FileDialog.connect("visibility_changed", self, "_on_FileDialog_visibility_changed")
 
 	$Header/Items/SaveButton.connect("pressed", self, "_on_SaveButton_pressed")
 	$Header/Items/LoadButton.connect("pressed", self, "_on_LoadButton_pressed")
@@ -73,28 +75,20 @@ func _on_Panel_gui_input(event: InputEvent) -> void:
 
 func _on_FileDialog_file_selected(file_path: String) -> void:
 	match $FileDialog.get_meta("operation"):
-		"SAVE":
-			graph_name.text = file_path.get_file().trim_suffix(".tres")
-			_graph.nodes = serialize()
-			ResourceSaver.save(file_path, _graph)
+		"save":
+			save_graph(file_path)
 
-		"LOAD":
-			var resource: = load(file_path)
-			if not resource:
-				$Messages.show_message("Failed on loading resource from path %s." % file_path)
-				return
+		"load":
+			load_graph(file_path)
 
-			if not resource is PGEGraph:
-				$Messages.show_message("Resourse from path %s is not a valid PGEGraph resource." % file_path)
-				return
-
-			graph_name.text = file_path.get_file().trim_suffix(".tres")
-			_graph = resource
-			load_graph(_graph)
-
-		"EXPORT":
+		"export":
 			# TODO: make export option (graph without editor_data)
 			pass
+
+
+func _on_FileDialog_visibility_changed() -> void:
+
+	pass
 
 
 func _on_SaveButton_pressed() -> void:
@@ -199,7 +193,7 @@ func _input(event: InputEvent) -> void:
 			else:
 				scroll_container.scroll_vertical += 3
 
-# To be called in a thread
+
 func clear() -> void:
 	for child in nodes.get_children():
 		child.queue_free()
@@ -208,13 +202,12 @@ func clear() -> void:
 func add_node(packed_scene: PackedScene, position: = Vector2.ZERO):
 	var new_pge_node = packed_scene.instance()
 
-	# Editor
 	nodes.add_child(new_pge_node, true)
 	new_pge_node.connect("tree_exited", self, "_on_graph_node_tree_exited", [new_pge_node])
 	new_pge_node.connect("moved", self, "_on_graph_node_moved", [new_pge_node])
 	new_pge_node.connect("released", self, "_on_graph_node_released", [new_pge_node])
 
-	new_pge_node.move_to(position - new_pge_node.header.get_size() / 2)
+	new_pge_node.move_to(position - new_pge_node.header.get_size() / 2.0)
 	new_pge_node.grab_focus()
 	new_pge_node.slot.edges_parent_path = edges.get_path()
 
@@ -255,7 +248,29 @@ func get_pge_node(node_name: String) -> Node:
 	return nodes.get_node_or_null(node_name)
 
 
-func load_graph(graph: PGEGraph) -> void:
+func save_graph(file_path: String) -> void:
+	graph_name.text = file_path.get_file().trim_suffix(".tres")
+	_graph.nodes = serialize()
+	ResourceSaver.save(file_path, _graph)
+
+
+func load_graph(file_path: String) -> void:
+	var resource: = load(file_path)
+	if not resource:
+		$Messages.show_message("Failed on loading resource from path %s." % file_path)
+		return
+
+	if not resource is PGEGraph:
+		$Messages.show_message("Resourse from path %s is not a valid PGEGraph resource." % file_path)
+		return
+
+	graph_name.text = file_path.get_file().trim_suffix(".tres")
+	_graph = resource
+
+	open_graph(_graph)
+
+
+func open_graph(graph: PGEGraph) -> void:
 	# TODO: show loading state message while loading
 	clear()
 
@@ -291,28 +306,28 @@ func refresh_edges() -> void:
 
 func popup_save() -> void:
 	$FileDialog.mode = FileDialog.MODE_SAVE_FILE
-	$FileDialog.window_title = POPUP_TITLES.SAVE
+	$FileDialog.window_title = _popup_titles["save"]
 	$FileDialog.popup_centered(Vector2())
-	$FileDialog.set_meta("operation", "SAVE")
+	$FileDialog.set_meta("operation", "save")
 
 
 func popup_load() -> void:
 	$FileDialog.mode = FileDialog.MODE_OPEN_FILE
-	$FileDialog.window_title = POPUP_TITLES.LOAD
+	$FileDialog.window_title = _popup_titles["load"]
 	$FileDialog.popup_centered(Vector2())
-	$FileDialog.set_meta("operation", "LOAD")
+	$FileDialog.set_meta("operation", "load")
 
 
 func popup_export() -> void:
 	$FileDialog.mode = FileDialog.MODE_SAVE_FILE
-	$FileDialog.window_title = POPUP_TITLES.EXPORT
+	$FileDialog.window_title = _popup_titles["export"]
 	$FileDialog.popup_centered(Vector2())
-	$FileDialog.set_meta("operation", "EXPORT")
+	$FileDialog.set_meta("operation", "export")
 
 
 func refresh_panel_size() -> void:
-	var panel_size := Vector2()
-	var window_size := OS.window_size
+	var panel_size: = Vector2()
+	var window_size: = OS.window_size
 
 	for child in nodes.get_children():
 		var child_end: Vector2 = child.rect_position + child.rect_size

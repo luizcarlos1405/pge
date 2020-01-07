@@ -60,7 +60,7 @@ mouse_filter = 2
 size_flags_horizontal = 3
 custom_styles/focus = SubResource( 1 )
 custom_styles/normal = SubResource( 2 )
-text = "GraphNode"
+text = "PGENode"
 caret_blink = true
 
 [node name="CloseButton" type="TextureButton" parent="Parts/Header"]
@@ -84,6 +84,7 @@ size_flags_stretch_ratio = 0.0
 mode = 1
 tangent_x_direction = -1
 max_connections = 0
+color = Color( 1, 1, 1, 1 )
 
 [node name="AddBlockButton" type="MenuButton" parent="Parts/Menu"]
 margin_left = 18.0

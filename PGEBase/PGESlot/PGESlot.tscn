@@ -31,10 +31,6 @@ action_mode = 0
 enabled_focus_mode = 0
 clip_text = true
 script = ExtResource( 6 )
-mode = 0
-tangent_x_direction = 0
-max_connections = 1
-color = Color( 1, 1, 1, 1 )
 
 [node name="PopupMenu" type="PopupMenu" parent="."]
 margin_right = 20.0

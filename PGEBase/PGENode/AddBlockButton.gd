@@ -5,7 +5,7 @@ extends MenuButton
 """
 
 
-var item_count := {}
+var item_count: = {}
 
 onready var graph_node = $"../../.."
 onready var popup = get_popup()

@@ -16,14 +16,14 @@ enum TangentDirection {LEFT = -1, NONE = 0, RIGHT = 1}
 
 export(Mode) var mode = Mode.BOTH
 export(TangentDirection) var tangent_x_direction: = TangentDirection.NONE setget set_tangent_x_direction
-export var max_connections := 0
-export var color := Color(1,1,1) setget set_color
+export var max_connections: = 1
+export var color: = Color(1,1,1) setget set_color
 
 var controller: Node = self
 var edges_parent_path: = NodePath("")
 var popup_menu_rect_min_size = Vector2(50, 2)
-var radius := 20.0 setget set_radius
-var edges := []
+var radius: = 20.0 setget set_radius
+var edges: = []
 
 
 func _ready() -> void:
@@ -96,6 +96,9 @@ func get_drag_data(position: Vector2) -> Object:
 
 
 func can_drop_data(position: Vector2, edge: PGEEdge) -> bool:
+	if not edge:
+		return false
+
 	if edge.connecting_slot == self or not edge:
 		return false
 

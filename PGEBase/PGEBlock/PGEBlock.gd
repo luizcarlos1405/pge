@@ -17,13 +17,13 @@ onready var slots = $Parts/Slots
 
 enum SlotSide {LEFT, RIGHT}
 
-export var type := "None"
-export var max_per_node := 0 #TODO: implement max blocks cap on PGENode
+export var type: = "None"
+export var max_per_node: = 0 #TODO: implement max blocks cap on PGENode
 export(int, 0, 10) var slots_number: = 1 setget set_slots_number
 export var slots_colors: = PoolColorArray() setget set_slots_colors
-export var resizable := true
-export var can_be_deleted := true
-export(SlotSide) var slot_side := SlotSide.RIGHT setget set_slot_side
+export var resizable: = true
+export var can_be_deleted: = true
+export(SlotSide) var slot_side: = SlotSide.RIGHT setget set_slot_side
 export(StyleBox) var style_box_normal = preload("PGEBlockPanelNormal.tres")
 export(StyleBox) var style_box_focus = preload("PGEBlockPanelFocus.tres")
 
@@ -178,6 +178,11 @@ func set_slots_number(value: int) -> void:
 				# The slots owners are not set because of scene inheritance problems
 				# So they don't appear in the scene tree of the editor
 				slots.add_child(new_slot)
+				if slot_side == SlotSide.LEFT:
+					new_slot.tangent_x_direction = new_slot.TangentDirection.LEFT
+				elif slot_side == SlotSide.RIGHT:
+					new_slot.tangent_x_direction = new_slot.TangentDirection.RIGHT
+
 
 		elif difference < 0:
 			var children: Array = slots.get_children()

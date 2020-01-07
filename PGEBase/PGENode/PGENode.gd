@@ -6,7 +6,6 @@ extends PanelContainer
 	Should only contain blocks that represent connections and/or data.
 """
 
-
 signal moved
 signal released
 signal expanded
@@ -26,16 +25,16 @@ enum SlotSide {LEFT, RIGHT}
 export(SlotSide) var slot_side: = SlotSide.LEFT setget set_slot_side
 export var style_box_normal: StyleBox = preload("PGENodePanelNormal.tres")
 export var style_box_focus: StyleBox = preload("PGENodePanelFocus.tres")
-export var can_be_deleted := true
+export var can_be_deleted: = true setget set_can_be_deleted
+export var can_be_renamed: = true
 
-var block_counter := {}
-var resizing := false
+var block_counter: = {}
+var resizing: = false
 
 var _resize_side: String
-var _resize_margin := 4
+var _resize_margin: = 4
 var _moving_block = null
 var _moving: = false
-var _resize_reference: Vector2
 var _move_reference: Vector2
 var _default_block_packed_scene = load("res://PGEBase/PGEBlock/PGEBlock.tscn")
 
@@ -59,7 +58,7 @@ func _ready() -> void:
 
 		connect("moved", self, "_on_moved")
 
-		set_block_options([{text = "Block", metadata = _default_block_packed_scene}])
+		set_block_options([{text = tr("Block"), metadata = _default_block_packed_scene}])
 
 
 func _on_gui_input(event: InputEvent) -> void:
@@ -74,8 +73,8 @@ func _on_gui_input(event: InputEvent) -> void:
 			set_default_cursor_shape(Control.CURSOR_ARROW)
 
 		if resizing:
-			var variation = event.global_position.x - _resize_reference.x
 			if _resize_side == "left":
+				var variation = event.position.x
 				var old_x_rect_size = rect_size.x
 
 				if rect_position.x + variation < 0:
@@ -86,12 +85,11 @@ func _on_gui_input(event: InputEvent) -> void:
 				if rect_size.x != old_x_rect_size:
 					move(Vector2(old_x_rect_size - rect_size.x, 0))
 
-				_resize_reference = rect_position
-
 			elif _resize_side == "right":
+				var variation = event.position.x - rect_size.x
 				rect_size.x += variation
 
-				_resize_reference = rect_position + rect_size
+				refresh_blocks_slots()
 
 
 	elif event is InputEventMouseButton:
@@ -103,8 +101,6 @@ func _on_gui_input(event: InputEvent) -> void:
 
 		elif event.button_index == BUTTON_LEFT:
 			if event.pressed:
-				_resize_reference = event.global_position
-
 				if event.position.x <= _resize_margin:
 					resizing = true
 					_resize_side = "left"
@@ -160,7 +156,7 @@ func _on_Header_gui_input(event: InputEvent) -> void:
 					_moving = true
 					_move_reference = event.position
 				# Rename
-				else:
+				elif can_be_renamed:
 					name_label.grab_focus()
 					name_label.select_all()
 					name_label.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -246,6 +242,17 @@ func _on_moved() -> void:
 		block.refresh_slots_edges()
 
 
+func refresh_blocks_slots() -> void:
+	for block in blocks.get_children():
+		for slot in block.slots.get_children():
+			slot.refresh_edges()
+
+
+func refresh_slot() -> void:
+#	slot.refresh_edges()
+	pass
+
+
 func serialize() -> Dictionary:
 	var data = {
 		editor_data = get_editor_data(),
@@ -325,13 +332,15 @@ func set_block_options(blocks_data: Array) -> void:
 
 
 func get_editor_data() -> Dictionary:
-	var editor_data := {
+	var editor_data: = {
 		name = name,
 		rect_position = rect_position,
 		rect_size = rect_size,
 		slot_side = slot_side,
 		filename = filename,
-		collapsed = toggle_collapse.pressed
+		collapsed = toggle_collapse.pressed,
+		can_be_deleted = can_be_deleted,
+		can_be_renamed = can_be_renamed
 	}
 
 	return editor_data
@@ -343,6 +352,8 @@ func set_editor_data(editor_data: Dictionary) -> void:
 	set_position(editor_data.rect_position)
 	set_size(editor_data.rect_size)
 	set_slot_side(editor_data.slot_side)
+	set_can_be_deleted(editor_data.can_be_deleted)
+	can_be_renamed = editor_data.can_be_renamed
 	toggle_collapse.emit_signal("toggled", editor_data.collapsed)
 	toggle_collapse.pressed = editor_data.collapsed
 
@@ -373,3 +384,9 @@ func set_slot_side(value: int) -> void:
 
 			slot.tangent_x_direction = 1
 			collapsed_slot.tangent_x_direction = -1
+
+
+func set_can_be_deleted(value: bool) -> void:
+	can_be_deleted = value
+
+	$Parts/Header/CloseButton.set_visible(can_be_deleted)
