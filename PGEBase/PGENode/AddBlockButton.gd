@@ -4,7 +4,7 @@ extends MenuButton
 	many of each item it has and avoid passing the max_per_node for each item
 """
 
-var _block_count: = {}
+var _block_count: = {} # Count blocks by it's filenames
 
 onready var graph_node = $"../../.."
 onready var popup: = get_popup()

@@ -18,7 +18,7 @@ onready var slots = $Parts/Slots
 enum SlotSide {LEFT, RIGHT}
 
 export var type: = "None"
-export var max_per_node: = 0 #TODO: implement max blocks cap on PGENode
+export var max_per_node: = 0
 export(int, 0, 10) var slots_number: = 1 setget set_slots_number
 export var slots_colors: = PoolColorArray() setget set_slots_colors
 export var resizable: = true

@@ -191,14 +191,18 @@ func _on_CloseButton_pressed() -> void:
 
 func _on_block_gui_input(event: InputEvent, block) -> void:
 	if event is InputEventMouseMotion:
-		# FIXME: When moving a smaller block through a larger one, they start swapping fast
 		if _moving_block:
-			var move_to_index = 0
+			var move_to_index = _moving_block.get_index()
 
 			for block in blocks.get_children():
-				if blocks.get_local_mouse_position().y > block.rect_position.y:
-					move_to_index = block.get_index()
-				pass
+				var block_v_center: float = block.rect_position.y + block.rect_size.y / 2.0
+
+				if block.get_index() < _moving_block.get_index(): # Above moving block
+					if blocks.get_local_mouse_position().y < block_v_center:
+						move_to_index = block.get_index()
+				elif block.get_index() > _moving_block.get_index(): # Bellow moving block
+					if blocks.get_local_mouse_position().y > block_v_center:
+						move_to_index = block.get_index()
 
 			if move_to_index != _moving_block.get_index():
 				blocks.move_child(_moving_block, move_to_index)
@@ -240,11 +244,6 @@ func refresh_blocks_slots() -> void:
 	for block in blocks.get_children():
 		for slot in block.slots.get_children():
 			slot.refresh_edges()
-
-
-func refresh_slot() -> void:
-#	slot.refresh_edges()
-	pass
 
 
 func serialize() -> Dictionary:
