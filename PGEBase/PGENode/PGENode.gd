@@ -299,6 +299,10 @@ func collapse() -> void:
 	add_block_button.hide()
 	collapsed_slot.show()
 
+	# Just... things don't happen instantaneously...
+	yield(get_tree(), "idle_frame")
+	yield(get_tree(), "idle_frame")
+
 	for block in blocks.get_children():
 		block.hide()
 		for slot in block.slots.get_children():
@@ -312,6 +316,10 @@ func collapse() -> void:
 func expand() -> void:
 	add_block_button.show()
 	collapsed_slot.hide()
+
+	yield(get_tree(), "idle_frame")
+	yield(get_tree(), "idle_frame")
+
 	for block in blocks.get_children():
 		block.show()
 		for slot in block.slots.get_children():
