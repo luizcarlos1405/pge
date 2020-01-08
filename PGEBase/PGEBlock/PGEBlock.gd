@@ -23,6 +23,7 @@ export(int, 0, 10) var slots_number: = 1 setget set_slots_number
 export var slots_colors: = PoolColorArray() setget set_slots_colors
 export var resizable: = true
 export var can_be_deleted: = true
+export var can_be_moved: = true
 export(SlotSide) var slot_side: = SlotSide.RIGHT setget set_slot_side
 export(StyleBox) var style_box_normal = preload("PGEBlockPanelNormal.tres")
 export(StyleBox) var style_box_focus = preload("PGEBlockPanelFocus.tres")
@@ -77,7 +78,6 @@ func _on_PopupMenu_index_pressed(index: int) -> void:
 
 			elif slot_side == SlotSide.RIGHT:
 				set_slot_side(SlotSide.LEFT)
-			pass
 		1: # Delete
 			queue_free()
 		_:

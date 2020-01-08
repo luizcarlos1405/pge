@@ -195,6 +195,8 @@ func _on_block_gui_input(event: InputEvent, block) -> void:
 			var move_to_index = _moving_block.get_index()
 
 			for block in blocks.get_children():
+				if not block.can_be_moved: continue
+
 				var block_v_center: float = block.rect_position.y + block.rect_size.y / 2.0
 
 				if block.get_index() < _moving_block.get_index(): # Above moving block
@@ -210,8 +212,9 @@ func _on_block_gui_input(event: InputEvent, block) -> void:
 	elif event is InputEventMouseButton:
 		if not block.resizing and event.button_index == BUTTON_LEFT and not get_tree().is_input_handled():
 			if event.pressed:
-				block.set_default_cursor_shape(Input.CURSOR_DRAG)
-				_moving_block = block
+				if block.can_be_moved:
+					block.set_default_cursor_shape(Input.CURSOR_DRAG)
+					_moving_block = block
 
 			else:
 				block.set_default_cursor_shape(Input.CURSOR_ARROW)
