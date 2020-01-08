@@ -208,6 +208,9 @@ func _on_block_gui_input(event: InputEvent, block) -> void:
 
 			if move_to_index != _moving_block.get_index():
 				blocks.move_child(_moving_block, move_to_index)
+				# The change is not instantaneous, so we wait
+				yield(get_tree().create_timer(0.01), "timeout")
+				refresh_blocks_slots()
 
 	elif event is InputEventMouseButton:
 		if not block.resizing and event.button_index == BUTTON_LEFT and not get_tree().is_input_handled():
@@ -226,8 +229,12 @@ func _on_block_resized(block: PanelContainer) -> void:
 	rect_size.y = $Parts.rect_size.y + $Parts.margin_top * 2
 
 
-func _on_block_tree_exiting(block: PanelContainer) -> void:
-	rect_size.y = $Parts.rect_size.y + $Parts.margin_top * 2
+func _on_block_tree_exited(block: PanelContainer) -> void:
+	# Closing the window calls this without a SceneTree
+	if get_tree():
+		# The change is not instantaneous, so we wait
+		yield(get_tree().create_timer(0.01), "timeout")
+		refresh_blocks_slots()
 
 
 func _on_Parts_sort_children() -> void:
@@ -267,8 +274,8 @@ func add_block(packed_scene: PackedScene) -> Node:
 	blocks.add_child(new_block, true)
 
 	new_block.connect("gui_input", self, "_on_block_gui_input", [new_block])
-	new_block.connect("tree_exiting", self, "_on_block_tree_exiting", [new_block])
-	new_block.connect("tree_exiting", add_block_button, "_on_block_tree_exiting", [new_block])
+	new_block.connect("tree_exited", self, "_on_block_tree_exited", [new_block])
+	new_block.connect("tree_exited", add_block_button, "_on_block_tree_exited", [new_block])
 	new_block.set_slots_controller(self)
 	new_block.set_slots_edges_parent_path(slot.edges_parent_path)
 
