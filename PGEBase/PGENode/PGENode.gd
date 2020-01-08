@@ -209,7 +209,8 @@ func _on_block_gui_input(event: InputEvent, block) -> void:
 			if move_to_index != _moving_block.get_index():
 				blocks.move_child(_moving_block, move_to_index)
 				# The change is not instantaneous, so we wait
-				yield(get_tree().create_timer(0.01), "timeout")
+				yield(get_tree(), "idle_frame")
+				yield(get_tree(), "idle_frame")
 				refresh_blocks_slots()
 
 	elif event is InputEventMouseButton:
@@ -233,7 +234,8 @@ func _on_block_tree_exited(block: PanelContainer) -> void:
 	# Closing the window calls this without a SceneTree
 	if get_tree():
 		# The change is not instantaneous, so we wait
-		yield(get_tree().create_timer(0.01), "timeout")
+		yield(get_tree(), "idle_frame")
+		yield(get_tree(), "idle_frame")
 		refresh_blocks_slots()
 
 

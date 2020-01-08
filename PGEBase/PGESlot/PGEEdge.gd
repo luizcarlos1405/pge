@@ -40,7 +40,8 @@ func _on_Slot_tree_exiting() -> void:
 func _on_Slot_rect_changed() -> void:
 	# Sometimes the rect changes, but the refresh is called before the values
 	# actually change. Let's wait a little
-	yield(get_tree().create_timer(0.01), "timeout")
+	yield(get_tree(), "idle_frame")
+	yield(get_tree(), "idle_frame")
 	refresh()
 
 

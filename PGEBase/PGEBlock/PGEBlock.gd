@@ -130,15 +130,20 @@ func get_connections() -> Array:
 func set_slot_side(value: int) -> void:
 	slot_side = value
 
+	# Setters get called before the tree is fully loaded
 	if slots:
 		if slot_side == SlotSide.LEFT:
 			$Parts.move_child(slots, 0)
 			for slot in slots.get_children():
+				yield(get_tree(), "idle_frame")
+				yield(get_tree(), "idle_frame")
 				slot.tangent_x_direction = -1
 
 		elif slot_side == SlotSide.RIGHT:
 			$Parts.move_child(slots, 1)
 			for slot in slots.get_children():
+				yield(get_tree(), "idle_frame")
+				yield(get_tree(), "idle_frame")
 				slot.tangent_x_direction = 1
 
 

@@ -130,6 +130,7 @@ func get_edges_parent() -> Node:
 
 func set_tangent_x_direction(value: int) -> void:
 	tangent_x_direction = value
+	refresh_edges()
 
 
 func set_color(value: Color) -> void:
