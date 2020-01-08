@@ -106,7 +106,10 @@ margin_bottom = 475.0
 popup_exclusive = true
 window_title = "Save Graph"
 resizable = true
+access = 2
 filters = PoolStringArray( "*.tres" )
+current_dir = "/home/luizcarlos1405/Palco/Dev/Projetos/Pasme"
+current_path = "/home/luizcarlos1405/Palco/Dev/Projetos/Pasme/"
 
 [node name="Header" type="Panel" parent="."]
 anchor_right = 1.0

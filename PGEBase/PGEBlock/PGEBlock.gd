@@ -39,6 +39,8 @@ func _ready() -> void:
 	set_slots_colors(slots_colors)
 
 	if not Engine.editor_hint:
+		$PopupMenu.set_item_disabled(1, not can_be_deleted)
+
 		$Resizer.set_visible(resizable)
 
 		connect("gui_input", self, "_on_gui_input")

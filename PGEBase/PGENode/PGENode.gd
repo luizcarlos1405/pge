@@ -17,7 +17,6 @@ onready var header: = $Parts/Header
 onready var blocks: = $Parts/Blocks
 onready var toggle_collapse: = $Parts/Header/ToggleCollapse
 onready var add_block_button: MenuButton = $Parts/Menu/AddBlockButton
-onready var add_block_popup: PopupMenu = add_block_button.get_popup()
 onready var name_label: Label = $Parts/Header/Name
 
 enum SlotSide {LEFT, RIGHT}
@@ -28,7 +27,6 @@ export var style_box_focus: StyleBox = preload("PGENodePanelFocus.tres")
 export var can_be_deleted: = true setget set_can_be_deleted
 export var can_be_renamed: = true
 
-var block_counter: = {}
 var resizing: = false
 
 var _resize_side: String
@@ -221,12 +219,8 @@ func _on_block_resized(block: PanelContainer) -> void:
 	rect_size.y = $Parts.rect_size.y + $Parts.margin_top * 2
 
 
-func _on_block_tree_exiting(block) -> void:
+func _on_block_tree_exiting(block: PanelContainer) -> void:
 	rect_size.y = $Parts.rect_size.y + $Parts.margin_top * 2
-
-	if block_counter.has(block.type):
-		block_counter[block.type].count -= 1
-		add_block_popup.set_block_disabled(block_counter[block.type].popup_menu_id, false)
 
 
 func _on_Parts_sort_children() -> void:
@@ -268,10 +262,11 @@ func serialize() -> Dictionary:
 
 func add_block(packed_scene: PackedScene) -> Node:
 	var new_block = packed_scene.instance()
-	blocks.add_child(new_block)
+	blocks.add_child(new_block, true)
 
 	new_block.connect("gui_input", self, "_on_block_gui_input", [new_block])
 	new_block.connect("tree_exiting", self, "_on_block_tree_exiting", [new_block])
+	new_block.connect("tree_exiting", add_block_button, "_on_block_tree_exiting", [new_block])
 	new_block.set_slots_controller(self)
 	new_block.set_slots_edges_parent_path(slot.edges_parent_path)
 
@@ -323,12 +318,7 @@ func set_block_options(blocks_data: Array) -> void:
 	#   metadata: PackedScene (The block's load(path_to.tsnc))
 	# }
 
-	add_block_popup.clear()
-
-	for i in range(blocks_data.size()):
-		var data = blocks_data[i]
-		add_block_popup.add_item(data.text)
-		add_block_popup.set_item_metadata(i, data.metadata)
+	add_block_button.set_block_options(blocks_data)
 
 
 func get_editor_data() -> Dictionary:

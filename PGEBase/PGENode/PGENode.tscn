@@ -84,7 +84,6 @@ size_flags_stretch_ratio = 0.0
 mode = 1
 tangent_x_direction = -1
 max_connections = 0
-color = Color( 1, 1, 1, 1 )
 
 [node name="AddBlockButton" type="MenuButton" parent="Parts/Menu"]
 margin_left = 18.0
