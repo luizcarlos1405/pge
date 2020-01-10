@@ -79,7 +79,9 @@ func _on_PopupMenu_index_pressed(index: int) -> void:
 			elif slot_side == SlotSide.RIGHT:
 				set_slot_side(SlotSide.LEFT)
 		1: # Delete
+			# TODO: block deletion with undoredo
 			queue_free()
+			pass
 		_:
 			push_warning("Nothing implemented for index %s." % index)
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=2]
+[gd_scene load_steps=28 format=2]
 
 [ext_resource path="res://PGEBase/GodotAlienTheme.tres" type="Theme" id=1]
 [ext_resource path="res://PGEBase/PGEEditor/PGEEditor.gd" type="Script" id=2]
@@ -6,7 +6,9 @@
 [ext_resource path="res://PGEBase/assets/icons/zoom_less.svg" type="Texture" id=4]
 [ext_resource path="res://PGEBase/assets/icons/zoom_reset.svg" type="Texture" id=5]
 [ext_resource path="res://PGEBase/assets/icons/zoom_more.svg" type="Texture" id=6]
-[ext_resource path="res://PGEBase/PGEEditor/Messages.gd" type="Script" id=7]
+[ext_resource path="res://PGEBase/assets/icons/undo.svg" type="Texture" id=7]
+[ext_resource path="res://PGEBase/assets/icons/redo.svg" type="Texture" id=8]
+[ext_resource path="res://PGEBase/PGEEditor/Messages.gd" type="Script" id=9]
 
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0.113725, 0.133333, 0.152941, 1 )
@@ -53,6 +55,24 @@ scancode = 16777224
 
 [sub_resource type="ShortCut" id=11]
 shortcut = SubResource( 10 )
+
+[sub_resource type="InputEventKey" id=15]
+control = true
+command = true
+pressed = true
+scancode = 90
+
+[sub_resource type="ShortCut" id=16]
+shortcut = SubResource( 15 )
+
+[sub_resource type="InputEventKey" id=17]
+shift = true
+control = true
+command = true
+scancode = 90
+
+[sub_resource type="ShortCut" id=18]
+shortcut = SubResource( 17 )
 
 [sub_resource type="StyleBoxFlat" id=12]
 bg_color = Color( 0.113725, 0.133333, 0.152941, 1 )
@@ -121,7 +141,6 @@ mouse_filter = 2
 custom_styles/panel = SubResource( 1 )
 
 [node name="Items" type="HBoxContainer" parent="Header"]
-editor/display_folded = true
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
@@ -208,6 +227,22 @@ margin_bottom = 24.0
 focus_mode = 0
 icon = ExtResource( 6 )
 
+[node name="Undo" type="Button" parent="Header/Items"]
+margin_left = 405.0
+margin_right = 433.0
+margin_bottom = 24.0
+focus_mode = 0
+shortcut = SubResource( 16 )
+icon = ExtResource( 7 )
+
+[node name="Redo" type="Button" parent="Header/Items"]
+margin_left = 437.0
+margin_right = 465.0
+margin_bottom = 24.0
+focus_mode = 0
+shortcut = SubResource( 18 )
+icon = ExtResource( 8 )
+
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -249,7 +284,7 @@ custom_styles/normal = SubResource( 13 )
 text = "Message"
 align = 1
 valign = 1
-script = ExtResource( 7 )
+script = ExtResource( 9 )
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Messages"]
 anims/show_message = SubResource( 14 )

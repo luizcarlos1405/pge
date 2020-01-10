@@ -49,11 +49,12 @@ func _ready():
 	$Header/Items/SaveButton.connect("pressed", self, "_on_SaveButton_pressed")
 	$Header/Items/LoadButton.connect("pressed", self, "_on_LoadButton_pressed")
 	$Header/Items/ExportButton.connect("pressed", self, "_on_ExportButton_pressed")
-	$Header/Items/DeleteButton.connect("pressed", self, "_on_DeleteButton_pressed")
 	$Header/Items/AddNodeButton.connect("pressed", self, "_on_AddNodeButton_pressed")
 	$Header/Items/ZoomIn.connect("pressed", self, "_on_ZoomIn_pressed")
 	$Header/Items/ZoomOut.connect("pressed", self, "_on_ZoomOut_pressed")
 	$Header/Items/ZoomReset.connect("pressed", self, "_on_ZoomReset_pressed")
+	$Header/Items/Undo.connect("pressed", self, "_on_Undo_pressed")
+	$Header/Items/Redo.connect("pressed", self, "_on_Redo_pressed")
 
 
 func _on_Panel_gui_input(event: InputEvent) -> void:
@@ -109,12 +110,12 @@ func _on_ExportButton_pressed() -> void:
 	pass
 
 
-func _on_DeleteButton_pressed() -> void:
-	var on_focus = get_focus_owner()
-	if not on_focus: return
-
-	if on_focus.get("can_be_deleted"):
-		on_focus.queue_free()
+#func _on_DeleteButton_pressed() -> void:
+#	var on_focus = get_focus_owner()
+#	if not on_focus: return
+#
+#	if on_focus.get("can_be_deleted"):
+#		on_focus.queue_free()
 
 
 func _on_AddNodeButton_pressed() -> void:
@@ -147,8 +148,14 @@ func _on_ZoomReset_pressed() -> void:
 	pass
 
 
-func _on_CloseButton_pressed() -> void:
-	get_tree().quit()
+func _on_Undo_pressed() -> void:
+	if not _undoredo.is_commiting_action():
+		_undoredo.undo()
+
+
+func _on_Redo_pressed() -> void:
+	if not _undoredo.is_commiting_action():
+		_undoredo.redo()
 
 
 func _on_pge_node_tree_exited(pge_node: PanelContainer) -> void:
@@ -157,7 +164,7 @@ func _on_pge_node_tree_exited(pge_node: PanelContainer) -> void:
 
 func _on_pge_node_drag_started(pge_node: PanelContainer) -> void:
 	_undoredo.create_action("Move Node")
-	_undoredo.add_undo_property(pge_node, "rect_position", pge_node.rect_position)
+	_undoredo.add_undo_method(pge_node, "move_to", pge_node.rect_position)
 	pass
 
 
@@ -179,7 +186,7 @@ func _on_pge_node_dragged(ammount: Vector2, pge_node) -> void:
 
 
 func _on_pge_node_drag_ended(pge_node) -> void:
-	_undoredo.add_do_property(pge_node, "rect_position", pge_node.rect_position)
+	_undoredo.add_do_method(pge_node, "move_to", pge_node.rect_position)
 	_undoredo.commit_action()
 	refresh_panel_size()
 
@@ -201,6 +208,65 @@ func _on_pge_node_connection_requested(from_slot, to_slot) -> void:
 	_undoredo.create_action("Connect Nodes")
 	_undoredo.add_do_method(from_slot, "connect_to", to_slot)
 	_undoredo.add_undo_method(from_slot, "disconnect_to", to_slot)
+	_undoredo.commit_action()
+
+
+func _on_pge_node_disconnection_requested(from_slot, to_slot) -> void:
+	_undoredo.create_action("Connect Nodes")
+	_undoredo.add_do_method(from_slot, "disconnect_to", to_slot)
+	_undoredo.add_undo_method(from_slot, "connect_to", to_slot)
+	_undoredo.commit_action()
+
+
+func _on_pge_node_add_block_requested(new_block, pge_node) -> void:
+	_undoredo.create_action("Add Block")
+	_undoredo.add_do_method(pge_node.blocks, "add_child", new_block)
+	_undoredo.add_do_reference(new_block)
+	_undoredo.add_undo_method(pge_node.blocks, "remove_child", new_block)
+	_undoredo.add_undo_reference(new_block)
+	_undoredo.commit_action()
+	pass
+
+
+func _on_pge_node_delete_pressed(pge_node) -> void:
+	_undoredo.create_action("Delete Node")
+	# Connections TO pge_node
+	for edge in pge_node.slot.edges:
+		if edge.is_inside_tree():
+			_undoredo.add_undo_reference(edge)
+			_undoredo.add_do_method(edge.get_parent(), "remove_child", edge)
+			_undoredo.add_undo_method(edge.get_parent(), "add_child", edge)
+	# Connections FROM pge_node
+	for block in pge_node.blocks.get_children():
+		for slot in block.slots.get_children():
+			for edge in slot.edges:
+				if edge.is_inside_tree():
+					_undoredo.add_undo_reference(edge)
+					_undoredo.add_do_method(edge.get_parent(), "remove_child", edge)
+					_undoredo.add_undo_method(edge.get_parent(), "add_child", edge)
+
+	_undoredo.add_do_method(nodes, "remove_child", pge_node)
+	_undoredo.add_undo_reference(pge_node)
+	_undoredo.add_undo_method(nodes, "add_child", pge_node)
+
+	_undoredo.commit_action()
+
+
+func _on_pge_node_rename_requested(intended_name: String, pge_node) -> void:
+	var new_name: = intended_name
+
+	# Little hack to avoid the @ on the autorenaming of godot
+	var i: = 2
+	while nodes.get_node_or_null(new_name):
+		new_name = intended_name + i as String
+		i += 1
+
+	_undoredo.create_action("Rename Node")
+	_undoredo.add_do_property(pge_node, "name", new_name)
+	_undoredo.add_do_property(pge_node.name_label, "text", new_name)
+
+	_undoredo.add_undo_property(pge_node, "name", pge_node.name)
+	_undoredo.add_undo_property(pge_node.name_label, "text", pge_node.name)
 	_undoredo.commit_action()
 
 
@@ -227,15 +293,6 @@ func _input(event: InputEvent) -> void:
 			else:
 				scroll_container.scroll_vertical += 3
 
-	if event is InputEventKey:
-		if event.pressed:
-			if event.scancode == KEY_U:
-				_undoredo.undo()
-			elif event.scancode == KEY_R:
-				_undoredo.redo()
-			elif event.scancode == KEY_S:
-				print_stray_nodes()
-
 
 func clear() -> void:
 	for child in nodes.get_children():
@@ -257,7 +314,6 @@ func _initialize_node(pge_node: PanelContainer) -> PanelContainer:
 	_undoredo.add_do_method(nodes, "add_child", pge_node, true)
 	_undoredo.add_do_reference(pge_node)
 	_undoredo.add_undo_method(nodes, "remove_child", pge_node)
-	_undoredo.add_undo_reference(pge_node)
 	_undoredo.commit_action()
 
 	pge_node.connect("tree_exited", self, "_on_pge_node_tree_exited", [pge_node])
@@ -265,7 +321,11 @@ func _initialize_node(pge_node: PanelContainer) -> PanelContainer:
 	pge_node.connect("dragged", self, "_on_pge_node_dragged", [pge_node])
 	pge_node.connect("drag_ended", self, "_on_pge_node_drag_ended", [pge_node])
 	pge_node.connect("collapse_toggled", self, "_on_pge_node_collapse_toggled", [pge_node])
-	pge_node.connect("connection_requested", self, "_on_pge_node_connection_requested")
+	pge_node.connect("connect_requested", self, "_on_pge_node_connection_requested")
+	pge_node.connect("disconnect_requested", self, "_on_pge_node_disconnection_requested")
+	pge_node.connect("add_block_requested", self, "_on_pge_node_add_block_requested", [pge_node])
+	pge_node.connect("delete_pressed", self, "_on_pge_node_delete_pressed", [pge_node])
+	pge_node.connect("rename_requested", self, "_on_pge_node_rename_requested", [pge_node])
 	pge_node.grab_focus()
 	pge_node.slot.edges_parent_path = edges.get_path()
 

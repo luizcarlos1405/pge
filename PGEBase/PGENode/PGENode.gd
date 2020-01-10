@@ -11,7 +11,10 @@ signal dragged(ammount)
 signal drag_ended
 signal collapse_toggled(pressed)
 signal delete_pressed
-signal connection_requested(from_slot, to_slot)
+signal connect_requested(from_slot, to_slot)
+signal disconnect_requested(from_slot, to_slot)
+signal add_block_requested(new_block)
+signal rename_requested(new_name)
 
 
 onready var slot: = $Parts/Menu/PGESlot
@@ -36,6 +39,7 @@ var _resize_side: String
 var _resize_margin: = 4
 var _moving_block = null
 var _moving: = false
+var _header_pressed: = false
 var _move_reference: Vector2
 var _default_block_packed_scene = load("res://PGEBase/PGEBlock/PGEBlock.tscn")
 
@@ -142,40 +146,35 @@ func _on_ToggleCollapse_toggled(pressed: bool) -> void:
 
 func _on_Header_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		if _moving:
+		if _header_pressed:
+			if not _moving:
+				_moving = true
+				emit_signal("drag_started")
+
 			emit_signal("dragged", event.position - _move_reference)
 
 	elif event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
 			if event.pressed:
 				if not event.doubleclick:
-					_moving = true
+					_header_pressed = true
 					_move_reference = event.position
-					emit_signal("drag_started")
 				# Start renaming
 				elif can_be_renamed:
 					name_label.grab_focus()
 					name_label.select_all()
 					name_label.mouse_filter = Control.MOUSE_FILTER_STOP
 			else:
-				_moving = false
-				emit_signal("drag_ended")
+				_header_pressed = false
+				if _moving:
+					_moving = false
+					emit_signal("drag_ended")
 
 # Rename
-func _on_LineEdit_text_entered(new_name: String)  -> void:
+func _on_LineEdit_text_entered(intended_name: String)  -> void:
 	name_label.release_focus()
-
-	if new_name:
-		name = new_name
-		# Little hack to avoid the @ on the autorenaming of godot
-		var i: = 1
-		var intended_name: = new_name
-		while name != new_name as String:
-			i += 1
-			new_name = intended_name + i as String
-			name = new_name
-
-		name_label.text = name
+	if intended_name:
+		emit_signal("rename_requested", intended_name)
 
 
 func _on_LineEdit_focus_exited() -> void:
@@ -185,7 +184,7 @@ func _on_LineEdit_focus_exited() -> void:
 
 
 func _on_CloseButton_pressed() -> void:
-	get_parent().remove_child(self)
+	emit_signal("delete_pressed")
 	pass
 
 
@@ -231,15 +230,13 @@ func _on_block_resized(block: PanelContainer) -> void:
 
 
 func _on_block_tree_exited(block: PanelContainer) -> void:
-	# Check if this was not called because this node is being deleted
-	if not is_queued_for_deletion():
-		# Closing the window calls this without a SceneTree
-		if get_tree():
-			# The change is not instantaneous, so we wait
-			yield(get_tree(), "idle_frame")
-			yield(get_tree(), "idle_frame")
+	# Closing the window calls this without a SceneTree
+	if is_inside_tree() and get_tree():
+		# The change is not instantaneous, so we wait
+		yield(get_tree(), "idle_frame")
+		yield(get_tree(), "idle_frame")
 
-			refresh_blocks_slots()
+		refresh_blocks_slots()
 
 
 func _on_Parts_sort_children() -> void:
@@ -278,15 +275,20 @@ func serialize() -> Dictionary:
 
 func add_block(packed_scene: PackedScene) -> Node:
 	var new_block = packed_scene.instance()
-	blocks.add_child(new_block, true)
 
-	new_block.connect("gui_input", self, "_on_block_gui_input", [new_block])
-	new_block.connect("tree_exited", self, "_on_block_tree_exited", [new_block])
-	new_block.connect("tree_exited", add_block_button, "_on_block_tree_exited", [new_block])
-	new_block.set_slots_controller(self)
-	new_block.set_slots_edges_parent_path(slot.edges_parent_path)
+	emit_signal("add_block_requested", new_block)
 
-	return new_block
+	return _initialize_block(new_block)
+
+
+func _initialize_block(pge_block) -> Node:
+	pge_block.connect("gui_input", self, "_on_block_gui_input", [pge_block])
+	pge_block.connect("tree_exited", self, "_on_block_tree_exited", [pge_block])
+	pge_block.connect("tree_exited", add_block_button, "_on_block_tree_exited", [pge_block])
+	pge_block.set_slots_controller(self)
+	pge_block.set_slots_edges_parent_path(slot.edges_parent_path)
+
+	return pge_block
 
 
 func move(ammount: Vector2) -> void:

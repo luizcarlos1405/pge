@@ -46,7 +46,8 @@ func _on_gui_input(event: InputEvent) -> void:
 
 
 func _on_edge_tree_exiting(edge) -> void:
-	edges.erase(edge)
+#	edges.erase(edge)
+	pass
 
 
 func start_connecting() -> PGEEdge:
@@ -90,6 +91,8 @@ func connect_to(pge_slot) -> void:
 func disconnect_to(pge_slot) -> void:
 	for edge in get_edges_from_self():
 		if edge.to_slot == pge_slot:
+			edges.erase(edge)
+			pge_slot.edges.erase(edge)
 			edge.queue_free()
 
 
@@ -127,7 +130,7 @@ func can_drop_data(position: Vector2, edge: PGEEdge) -> bool:
 
 
 func drop_data(position: Vector2, edge: PGEEdge) -> void:
-	controller.emit_signal("connection_requested", edge.connecting_slot, self)
+	controller.emit_signal("connect_requested", edge.connecting_slot, self)
 #	receive_connection(edge)
 
 

@@ -13,18 +13,17 @@ func _ready():
 func _on_about_to_show() -> void:
 	clear()
 
-	for connection in slot.edges:
-		var item_text = make_item_text(connection)
+	for edge in slot.edges:
+		var item_text = make_item_text(edge)
 		add_icon_item(delete_icon, item_text)
 
 
 func _on_index_pressed(index: int) -> void:
 	var item_text = get_item_text(index)
 
-	for connection in slot.edges:
-		if item_text == make_item_text(connection):
-
-			connection.queue_free()
+	for edge in slot.edges:
+		if item_text == make_item_text(edge):
+			slot.controller.emit_signal("disconnect_requested", edge.from_slot, edge.to_slot)
 			return
 
 

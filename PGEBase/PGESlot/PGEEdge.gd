@@ -16,7 +16,6 @@ var from_slot_overwrite
 
 var connecting_slot # While still dragging, has the drag origin
 var _curve: = Curve2D.new()
-var _force_origin_point: = false
 
 
 func _ready() -> void:
@@ -34,9 +33,9 @@ func _ready() -> void:
 
 
 
-
 func _on_Slot_tree_exiting() -> void:
-	queue_free()
+#	queue_free()
+	pass
 
 
 func _on_Slot_rect_changed() -> void:
