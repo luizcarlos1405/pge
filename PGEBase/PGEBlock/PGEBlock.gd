@@ -127,6 +127,11 @@ func get_connections() -> Array:
 	return connections
 
 
+func refresh_slots_edges() -> void:
+	for slot in slots.get_children():
+		slot.refresh_edges()
+
+
 func set_slot_side(value: int) -> void:
 	slot_side = value
 
@@ -145,21 +150,6 @@ func set_slot_side(value: int) -> void:
 				yield(get_tree(), "idle_frame")
 				yield(get_tree(), "idle_frame")
 				slot.tangent_x_direction = 1
-
-
-func get_editor_data() -> Dictionary:
-	var data: = {
-		rect_min_size = rect_min_size,
-		filename = filename,
-		slot_side = slot_side
-	}
-
-	return data
-
-
-func refresh_slots_edges() -> void:
-	for slot in slots.get_children():
-		slot.refresh_edges()
 
 
 func set_slots_controller(object: Object) -> void:
@@ -205,6 +195,17 @@ func set_slots_colors(value: PoolColorArray) -> void:
 		var slots_to_color: int = min(slots.get_child_count(), slots_colors.size()) as int
 		for i in range(slots_to_color):
 			slots.get_child(i).color = slots_colors[i]
+
+
+func get_editor_data() -> Dictionary:
+	var data: = {
+		name = name,
+		rect_min_size = rect_min_size,
+		filename = filename,
+		slot_side = slot_side
+	}
+
+	return data
 
 
 func set_editor_data(data: Dictionary) -> void:

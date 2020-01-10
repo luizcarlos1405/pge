@@ -2,13 +2,15 @@ tool
 extends Button
 
 """
-	It connects via the Godot's drag system. A controller has to be provided
-	or it will assume it's controlling itself. Use `set_controller` method or
-	provide the controler's NodePath in the variable `controller_path`.
+	Identifies the connection intent and creates an PGEEdge if succesfully
+	connected. PGEEdge extends Line2D and draws the connection properly.
+
+	It uses the Godot's drag system. A PGENode has to be set as a controller.
+	If it doesn't have a controller it will not work.
 
 	The edges (Line2D) will be set as child of the node in the path
-	`edges_parent_path` or as child of this slot if no path is provided. This is
-	usefull to better control the edge draw order.
+	`edges_parent_path` or as child of this slot if no path or an invalid path
+	is provided. This is usefull to better control the edge draw order.
 """
 
 enum Mode {BOTH, IN, OUT, NONE}
@@ -19,11 +21,13 @@ export(TangentDirection) var tangent_x_direction: = TangentDirection.NONE setget
 export var max_connections: = 1
 export var color: = Color(1,1,1) setget set_color
 
-var controller: Node = self
+var controller: Node = null # Aways a PGENode
 var edges_parent_path: = NodePath("")
 var popup_menu_rect_min_size = Vector2(50, 2)
 var radius: = 20.0 setget set_radius
 var edges: = []
+
+var _connecting_edge: PGEEdge
 
 
 func _ready() -> void:
@@ -46,19 +50,18 @@ func _on_edge_tree_exiting(edge) -> void:
 
 
 func start_connecting() -> PGEEdge:
-	if mode == Mode.NONE: return null
+	var parent = get_node_or_null(edges_parent_path)
+	_connecting_edge = PGEEdge.new()
 
-	if max_connections:
-		if edges.size() >= max_connections:
-			return null
+	if not parent:
+		push_warning("Failed to get node on path %s, adding edge as child of the slot." % edges_parent_path)
+		parent = self
 
-	var edge = PGEEdge.new()
+	parent.add_child(_connecting_edge, true)
 
-	get_node(edges_parent_path).add_child(edge, true)
+	_connecting_edge.start_connecting(self)
 
-	edge.start_connecting(self)
-
-	return edge
+	return _connecting_edge
 
 
 func receive_connection(edge: PGEEdge):
@@ -74,12 +77,20 @@ func receive_connection(edge: PGEEdge):
 	edge.connect("tree_exiting", edge.to_slot, "_on_edge_tree_exiting", [edge])
 
 
-func connect_to(slot) -> void:
-	var edge: PGEEdge = start_connecting()
-	if edge:
-		slot.receive_connection(edge)
+func connect_to(pge_slot) -> void:
+	if not _connecting_edge:
+		start_connecting()
 
-	edge.refresh()
+	pge_slot.receive_connection(_connecting_edge)
+	_connecting_edge.refresh()
+
+	_connecting_edge = null
+
+
+func disconnect_to(pge_slot) -> void:
+	for edge in get_edges_from_self():
+		if edge.to_slot == pge_slot:
+			edge.queue_free()
 
 
 func get_edges_from_self() -> Array:
@@ -92,13 +103,17 @@ func get_edges_from_self() -> Array:
 
 
 func get_drag_data(position: Vector2) -> Object:
+	if not controller or mode == Mode.NONE:
+		return null
+
+	if max_connections:
+		if edges.size() >= max_connections:
+			return null
+
 	return start_connecting()
 
 
 func can_drop_data(position: Vector2, edge: PGEEdge) -> bool:
-	if not edge:
-		return false
-
 	if edge.connecting_slot == self or not edge:
 		return false
 
@@ -112,7 +127,8 @@ func can_drop_data(position: Vector2, edge: PGEEdge) -> bool:
 
 
 func drop_data(position: Vector2, edge: PGEEdge) -> void:
-	receive_connection(edge)
+	controller.emit_signal("connection_requested", edge.connecting_slot, self)
+#	receive_connection(edge)
 
 
 func refresh_edges() -> void:

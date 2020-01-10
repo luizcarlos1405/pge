@@ -1,11 +1,11 @@
-[gd_scene load_steps=21 format=2]
+[gd_scene load_steps=22 format=2]
 
 [ext_resource path="res://PGEBase/GodotAlienTheme.tres" type="Theme" id=1]
 [ext_resource path="res://PGEBase/PGEEditor/PGEEditor.gd" type="Script" id=2]
 [ext_resource path="res://PGEBase/PGEGraph.gd" type="Script" id=3]
-[ext_resource path="res://PGEBase/icons/zoom_less.svg" type="Texture" id=4]
-[ext_resource path="res://PGEBase/icons/zoom_reset.svg" type="Texture" id=5]
-[ext_resource path="res://PGEBase/icons/zoom_more.svg" type="Texture" id=6]
+[ext_resource path="res://PGEBase/assets/icons/zoom_less.svg" type="Texture" id=4]
+[ext_resource path="res://PGEBase/assets/icons/zoom_reset.svg" type="Texture" id=5]
+[ext_resource path="res://PGEBase/assets/icons/zoom_more.svg" type="Texture" id=6]
 [ext_resource path="res://PGEBase/PGEEditor/Messages.gd" type="Script" id=7]
 
 [sub_resource type="StyleBoxFlat" id=1]
@@ -55,6 +55,9 @@ scancode = 16777224
 shortcut = SubResource( 10 )
 
 [sub_resource type="StyleBoxFlat" id=12]
+bg_color = Color( 0.113725, 0.133333, 0.152941, 1 )
+
+[sub_resource type="StyleBoxFlat" id=13]
 content_margin_left = 20.0
 content_margin_right = 20.0
 bg_color = Color( 0.113725, 0.133333, 0.152941, 0.733333 )
@@ -63,7 +66,7 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
-[sub_resource type="Animation" id=13]
+[sub_resource type="Animation" id=14]
 length = 0.5
 tracks/0/type = "value"
 tracks/0/path = NodePath(".:rect_scale")
@@ -212,9 +215,9 @@ margin_top = 26.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_styles/bg = SubResource( 12 )
 
 [node name="Panel" type="Panel" parent="ScrollContainer"]
-editor/display_folded = true
 margin_right = 1024.0
 margin_bottom = 574.0
 size_flags_horizontal = 3
@@ -242,14 +245,14 @@ grow_horizontal = 2
 grow_vertical = 2
 rect_scale = Vector2( 0.926261, 0.768455 )
 rect_pivot_offset = Vector2( 58, 11 )
-custom_styles/normal = SubResource( 12 )
+custom_styles/normal = SubResource( 13 )
 text = "Message"
 align = 1
 valign = 1
 script = ExtResource( 7 )
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Messages"]
-anims/show_message = SubResource( 13 )
+anims/show_message = SubResource( 14 )
 
 [node name="Timer" type="Timer" parent="Messages"]
 wait_time = 3.0

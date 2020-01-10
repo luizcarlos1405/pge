@@ -33,6 +33,8 @@ func _ready() -> void:
 	_curve.add_point(Vector2())
 
 
+
+
 func _on_Slot_tree_exiting() -> void:
 	queue_free()
 

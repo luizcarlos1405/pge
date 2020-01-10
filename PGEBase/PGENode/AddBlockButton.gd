@@ -6,7 +6,7 @@ extends MenuButton
 
 var _block_count: = {} # Count blocks by it's filenames
 
-onready var graph_node = $"../../.."
+onready var pge_node = $"../../.."
 onready var popup: = get_popup()
 
 
@@ -15,7 +15,7 @@ func _ready():
 
 
 func _on_popup_menu_index_pressed(index: int) -> void:
-	var block = graph_node.add_block(popup.get_item_metadata(index))
+	var block = pge_node.add_block(popup.get_item_metadata(index))
 
 	if not _block_count.has(block.filename):
 		_block_count[block.filename] = 1
@@ -27,7 +27,7 @@ func _on_popup_menu_index_pressed(index: int) -> void:
 		pass
 
 
-func _on_block_tree_exiting(block) -> void:
+func _on_block_tree_exited(block) -> void:
 	if block.max_per_node <= 0: return
 
 	for i in popup.get_item_count():

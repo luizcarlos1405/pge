@@ -1,6 +1,6 @@
 extends PopupMenu
 
-var delete_icon: Texture = preload("../icons/icon_delete.svg")
+var delete_icon: Texture = preload("../assets/icons/icon_delete.svg")
 
 onready var slot = get_parent()
 

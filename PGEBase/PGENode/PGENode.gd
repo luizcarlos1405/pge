@@ -6,10 +6,13 @@ extends PanelContainer
 	Should only contain blocks that represent connections and/or data.
 """
 
-signal moved
-signal released
-signal expanded
-signal collapsed
+signal drag_started
+signal dragged(ammount)
+signal drag_ended
+signal collapse_toggled(pressed)
+signal delete_pressed
+signal connection_requested(from_slot, to_slot)
+
 
 onready var slot: = $Parts/Menu/PGESlot
 onready var collapsed_slot: = $Parts/Menu/CollapsedSlot
@@ -54,8 +57,6 @@ func _ready() -> void:
 		$Parts.connect("sort_children", self, "_on_Parts_sort_children")
 		$Parts/Header/CloseButton.connect("pressed", self, "_on_CloseButton_pressed")
 
-		connect("moved", self, "_on_moved")
-
 		set_block_options([{text = tr("Block"), metadata = _default_block_packed_scene}])
 
 
@@ -91,13 +92,7 @@ func _on_gui_input(event: InputEvent) -> void:
 
 
 	elif event is InputEventMouseButton:
-		if event.button_index == BUTTON_RIGHT:
-			if event.pressed:
-				if not get_tree().is_input_handled():
-					$PopupMenu.popup(Rect2(get_global_mouse_position(), Vector2(1, 1)))
-					pass
-
-		elif event.button_index == BUTTON_LEFT:
+		if event.button_index == BUTTON_LEFT:
 			if event.pressed:
 				if event.position.x <= _resize_margin:
 					resizing = true
@@ -110,6 +105,12 @@ func _on_gui_input(event: InputEvent) -> void:
 			else:
 				set_default_cursor_shape(Control.CURSOR_ARROW)
 				resizing = false
+
+		elif event.button_index == BUTTON_RIGHT:
+			if event.pressed:
+				if not get_tree().is_input_handled():
+					$PopupMenu.popup(Rect2(get_global_mouse_position(), Vector2(1, 1)))
+					pass
 
 
 func _on_focus_entered() -> void:
@@ -135,17 +136,14 @@ func _on_PopupMenu_index_pressed(index: int) -> void:
 
 
 func _on_ToggleCollapse_toggled(pressed: bool) -> void:
+	emit_signal("collapse_toggled", pressed)
 	grab_focus()
-	if pressed:
-		collapse()
-	else:
-		expand()
 
 
 func _on_Header_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if _moving:
-			move(event.position - _move_reference)
+			emit_signal("dragged", event.position - _move_reference)
 
 	elif event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
@@ -153,14 +151,15 @@ func _on_Header_gui_input(event: InputEvent) -> void:
 				if not event.doubleclick:
 					_moving = true
 					_move_reference = event.position
-				# Rename
+					emit_signal("drag_started")
+				# Start renaming
 				elif can_be_renamed:
 					name_label.grab_focus()
 					name_label.select_all()
 					name_label.mouse_filter = Control.MOUSE_FILTER_STOP
 			else:
 				_moving = false
-				emit_signal("released")
+				emit_signal("drag_ended")
 
 # Rename
 func _on_LineEdit_text_entered(new_name: String)  -> void:
@@ -186,7 +185,8 @@ func _on_LineEdit_focus_exited() -> void:
 
 
 func _on_CloseButton_pressed() -> void:
-	queue_free()
+	get_parent().remove_child(self)
+	pass
 
 
 func _on_block_gui_input(event: InputEvent, block) -> void:
@@ -231,12 +231,15 @@ func _on_block_resized(block: PanelContainer) -> void:
 
 
 func _on_block_tree_exited(block: PanelContainer) -> void:
-	# Closing the window calls this without a SceneTree
-	if get_tree():
-		# The change is not instantaneous, so we wait
-		yield(get_tree(), "idle_frame")
-		yield(get_tree(), "idle_frame")
-		refresh_blocks_slots()
+	# Check if this was not called because this node is being deleted
+	if not is_queued_for_deletion():
+		# Closing the window calls this without a SceneTree
+		if get_tree():
+			# The change is not instantaneous, so we wait
+			yield(get_tree(), "idle_frame")
+			yield(get_tree(), "idle_frame")
+
+			refresh_blocks_slots()
 
 
 func _on_Parts_sort_children() -> void:
@@ -244,12 +247,14 @@ func _on_Parts_sort_children() -> void:
 	rect_size.y = $Parts.rect_size.y + $Parts.margin_top * 2
 
 
-func _on_moved() -> void:
+func _on_moved(ammount: Vector2) -> void:
+	refresh_slots()
+	refresh_blocks_slots()
+
+
+func refresh_slots() -> void:
 	for edge in slot.edges:
 		edge.refresh()
-
-	for block in blocks.get_children():
-		block.refresh_slots_edges()
 
 
 func refresh_blocks_slots() -> void:
@@ -286,20 +291,21 @@ func add_block(packed_scene: PackedScene) -> Node:
 
 func move(ammount: Vector2) -> void:
 	rect_position += ammount
-	emit_signal("moved")
+	refresh_slots()
+	refresh_blocks_slots()
 
 
 func move_to(position: Vector2) -> void:
 	rect_position = position
-	emit_signal("moved")
-	emit_signal("released")
+	refresh_slots()
+	refresh_blocks_slots()
 
 
 func collapse() -> void:
 	add_block_button.hide()
 	collapsed_slot.show()
 
-	# Just... things don't happen instantaneously...
+	# Just... things doesn't happen instantaneously...
 	yield(get_tree(), "idle_frame")
 	yield(get_tree(), "idle_frame")
 
@@ -309,8 +315,6 @@ func collapse() -> void:
 			for edge in slot.get_edges_from_self():
 				edge.from_slot_overwrite = collapsed_slot
 			slot.refresh_edges()
-
-	emit_signal("collapsed")
 
 
 func expand() -> void:
@@ -326,8 +330,6 @@ func expand() -> void:
 			for edge in slot.get_edges_from_self():
 				edge.from_slot_overwrite = null
 			slot.refresh_edges()
-
-	emit_signal("expanded")
 
 
 func set_block_options(blocks_data: Array) -> void:
