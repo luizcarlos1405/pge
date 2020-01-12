@@ -23,8 +23,7 @@ func _on_index_pressed(index: int) -> void:
 
 	for edge in slot.edges:
 		if item_text == make_item_text(edge):
-			slot.controller.emit_signal("disconnect_requested", edge.from_slot, edge.to_slot)
-			return
+			PGE.undoredo_remove_edge(edge)
 
 
 func make_item_text(graph_edge) -> String:

@@ -33,11 +33,6 @@ func _ready() -> void:
 
 
 
-func _on_Slot_tree_exiting() -> void:
-#	queue_free()
-	pass
-
-
 func _on_Slot_rect_changed() -> void:
 	# Sometimes the rect changes, but the refresh is called before the values
 	# actually change. Let's wait a little
@@ -113,7 +108,6 @@ func refresh() -> void:
 func set_from_slot(value) -> void:
 	from_slot = value
 
-	from_slot.connect("tree_exiting", self, "_on_Slot_tree_exiting")
 	from_slot.connect("item_rect_changed", self, "_on_Slot_rect_changed")
 
 	gradient.set_color(0, from_slot.color)
@@ -122,7 +116,6 @@ func set_from_slot(value) -> void:
 func set_to_slot(value) -> void:
 	to_slot = value
 
-	to_slot.connect("tree_exiting", self, "_on_Slot_tree_exiting")
 	to_slot.connect("item_rect_changed", self, "_on_Slot_rect_changed")
 
 	gradient.set_color(1, to_slot.color)

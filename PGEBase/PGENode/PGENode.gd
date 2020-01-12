@@ -7,14 +7,10 @@ extends PanelContainer
 """
 
 signal drag_started
-signal dragged(ammount)
+signal dragged
 signal drag_ended
 signal collapse_toggled(pressed)
-signal delete_pressed
-signal connect_requested(from_slot, to_slot)
-signal disconnect_requested(from_slot, to_slot)
-signal add_block_requested(new_block)
-signal rename_requested(new_name)
+signal delete_requested
 
 
 onready var slot: = $Parts/Menu/PGESlot
@@ -23,7 +19,7 @@ onready var header: = $Parts/Header
 onready var blocks: = $Parts/Blocks
 onready var toggle_collapse: = $Parts/Header/ToggleCollapse
 onready var add_block_button: MenuButton = $Parts/Menu/AddBlockButton
-onready var name_label: Label = $Parts/Header/Name
+onready var name_line_edit: LineEdit = $Parts/Header/Name
 
 enum SlotSide {LEFT, RIGHT}
 
@@ -41,7 +37,7 @@ var _moving_block = null
 var _moving: = false
 var _header_pressed: = false
 var _move_reference: Vector2
-var _default_block_packed_scene = load("res://PGEBase/PGEBlock/PGEBlock.tscn")
+var _default_block_scene_path: = "res://PGEBase/PGEBlock/PGEBlock.tscn"
 
 
 func _ready() -> void:
@@ -54,14 +50,14 @@ func _ready() -> void:
 		$PopupMenu.connect("index_pressed", self, "_on_PopupMenu_index_pressed")
 		toggle_collapse.connect("toggled", self, "_on_ToggleCollapse_toggled")
 		header.connect("gui_input", self, "_on_Header_gui_input")
-		name_label.connect("text_entered", self, "_on_LineEdit_text_entered")
-		name_label.connect("focus_exited", self, "_on_LineEdit_focus_exited")
-		name_label.text = name
+		name_line_edit.connect("text_entered", self, "_on_LineEdit_text_entered")
+		name_line_edit.connect("focus_exited", self, "_on_LineEdit_focus_exited")
+		name_line_edit.text = name
 
 		$Parts.connect("sort_children", self, "_on_Parts_sort_children")
 		$Parts/Header/CloseButton.connect("pressed", self, "_on_CloseButton_pressed")
 
-		set_block_options([{text = tr("Block"), metadata = _default_block_packed_scene}])
+		set_block_options([{text = tr("Block"), scene_path = _default_block_scene_path}])
 
 
 func _on_gui_input(event: InputEvent) -> void:
@@ -126,21 +122,24 @@ func _on_focus_exited() -> void:
 	add_stylebox_override("panel", style_box_normal)
 
 
-
 func _on_PopupMenu_index_pressed(index: int) -> void:
 	match index:
-		0:
-			if slot_side == SlotSide.LEFT:
-				set_slot_side(SlotSide.RIGHT)
+		0: # Swap slot side
+			var new_side: int
 
+			if slot_side == SlotSide.LEFT:
+				new_side = SlotSide.RIGHT
 			elif slot_side == SlotSide.RIGHT:
-				set_slot_side(SlotSide.LEFT)
+				new_side = SlotSide.LEFT
+
+			PGE.undoredo_node_set_slot_side(self, new_side)
 		_:
 			push_warning("Nothing implemented for index %s." % index)
 
 
 func _on_ToggleCollapse_toggled(pressed: bool) -> void:
-	emit_signal("collapse_toggled", pressed)
+	PGE.undoredo_node_toggle_collapse(self, pressed)
+
 	grab_focus()
 
 
@@ -149,9 +148,10 @@ func _on_Header_gui_input(event: InputEvent) -> void:
 		if _header_pressed:
 			if not _moving:
 				_moving = true
-				emit_signal("drag_started")
+				PGE.undoredo.set_meta("node_start_position", rect_position)
 
-			emit_signal("dragged", event.position - _move_reference)
+			move(event.position - _move_reference)
+			emit_signal("dragged")
 
 	elif event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
@@ -161,34 +161,51 @@ func _on_Header_gui_input(event: InputEvent) -> void:
 					_move_reference = event.position
 				# Start renaming
 				elif can_be_renamed:
-					name_label.grab_focus()
-					name_label.select_all()
-					name_label.mouse_filter = Control.MOUSE_FILTER_STOP
+					name_line_edit.grab_focus()
+					name_line_edit.select_all()
+					name_line_edit.mouse_filter = Control.MOUSE_FILTER_STOP
 			else:
 				_header_pressed = false
 				if _moving:
 					_moving = false
-					emit_signal("drag_ended")
+
+					var start_position: Vector2 = PGE.undoredo.get_meta("node_start_position")
+					var current_position: = rect_position
+					if start_position != current_position:
+						PGE.undoredo_move_node(self, start_position, current_position)
+
+						emit_signal("drag_ended")
 
 # Rename
 func _on_LineEdit_text_entered(intended_name: String)  -> void:
-	name_label.release_focus()
 	if intended_name:
-		emit_signal("rename_requested", intended_name)
+		var old_name: = name
+		var new_name: = intended_name
+		# So we don't get a name like @PGENode@481, but PGENode2
+		name = new_name
+
+		var i: = 2
+		while name != new_name:
+			new_name = intended_name + i as String
+			name = new_name
+			i += 1
+
+		PGE.undoredo_rename_node(self, old_name, new_name)
+
+	name_line_edit.release_focus()
 
 
 func _on_LineEdit_focus_exited() -> void:
-	name_label.deselect()
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_label.text = name
+	name_line_edit.deselect()
+	name_line_edit.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_line_edit.text = name
 
 
 func _on_CloseButton_pressed() -> void:
-	emit_signal("delete_pressed")
-	pass
+	PGE.undoredo_delete_node(self)
 
 
-func _on_block_gui_input(event: InputEvent, block) -> void:
+func _on_pge_block_gui_input(event: InputEvent, block) -> void:
 	if event is InputEventMouseMotion:
 		if _moving_block:
 			var move_to_index = _moving_block.get_index()
@@ -219,17 +236,25 @@ func _on_block_gui_input(event: InputEvent, block) -> void:
 					block.set_default_cursor_shape(Input.CURSOR_DRAG)
 					_moving_block = block
 
+					PGE.undoredo.set_meta("start_index", _moving_block.get_index())
+
 			else:
-				block.set_default_cursor_shape(Input.CURSOR_ARROW)
-				_moving_block = null
+				if _moving_block:
+					var start_index: int = PGE.undoredo.get_meta("start_index")
+					var current_index: int = _moving_block.get_index()
+					if current_index != start_index:
+						PGE.undoredo_move_block(_moving_block, start_index, current_index)
+
+					block.set_default_cursor_shape(Input.CURSOR_ARROW)
+					_moving_block = null
 
 
-func _on_block_resized(block: PanelContainer) -> void:
+func _on_pge_block_resized(block: PanelContainer) -> void:
 	$Parts.rect_size.y = 0 # Workaround for a weird bug on resizing
 	rect_size.y = $Parts.rect_size.y + $Parts.margin_top * 2
 
 
-func _on_block_tree_exited(block: PanelContainer) -> void:
+func _on_pge_block_tree_exited(block: PanelContainer) -> void:
 	# Closing the window calls this without a SceneTree
 	if is_inside_tree() and get_tree():
 		# The change is not instantaneous, so we wait
@@ -237,6 +262,11 @@ func _on_block_tree_exited(block: PanelContainer) -> void:
 		yield(get_tree(), "idle_frame")
 
 		refresh_blocks_slots()
+
+
+func _on_pge_block_data_changed(data: Dictionary) -> void:
+
+	pass
 
 
 func _on_Parts_sort_children() -> void:
@@ -273,22 +303,20 @@ func serialize() -> Dictionary:
 	return data
 
 
-func add_block(packed_scene: PackedScene) -> Node:
-	var new_block = packed_scene.instance()
+func add_block(scene_path: String) -> Node:
+	var new_block = load(scene_path).instance()
+	blocks.add_child(new_block)
+	_initialize_block(new_block)
+	return new_block
 
-	emit_signal("add_block_requested", new_block)
 
-	return _initialize_block(new_block)
-
-
-func _initialize_block(pge_block) -> Node:
-	pge_block.connect("gui_input", self, "_on_block_gui_input", [pge_block])
-	pge_block.connect("tree_exited", self, "_on_block_tree_exited", [pge_block])
-	pge_block.connect("tree_exited", add_block_button, "_on_block_tree_exited", [pge_block])
+func _initialize_block(pge_block) -> void:
+	pge_block.connect("gui_input", self, "_on_pge_block_gui_input", [pge_block])
+	pge_block.connect("tree_exited", self, "_on_pge_block_tree_exited", [pge_block])
+	pge_block.connect("tree_exited", add_block_button, "_on_pge_block_tree_exited", [pge_block])
+	pge_block.connect("data_changed", self, "_on_block_data_changed", [pge_block])
 	pge_block.set_slots_controller(self)
 	pge_block.set_slots_edges_parent_path(slot.edges_parent_path)
-
-	return pge_block
 
 
 func move(ammount: Vector2) -> void:
@@ -338,7 +366,7 @@ func set_block_options(blocks_data: Array) -> void:
 	# Expect an array with Dictionaries in the following format
 	# {
 	#   text: String,
-	#   metadata: PackedScene (The block's load(path_to.tsnc))
+	#   scene_path: String (The block's res://path/to/block.tsnc)
 	# }
 
 	add_block_button.set_block_options(blocks_data)
@@ -360,17 +388,19 @@ func get_editor_data() -> Dictionary:
 
 
 func set_editor_data(editor_data: Dictionary) -> void:
-	name_label.text = editor_data.name
+	name_line_edit.text = editor_data.name
 	set_name(editor_data.name)
-	set_position(editor_data.rect_position)
+	set_position(editor_data.rect_position - header.rect_size / 2.0)
 	set_size(editor_data.rect_size)
 	set_slot_side(editor_data.slot_side)
 	set_can_be_deleted(editor_data.can_be_deleted)
 	can_be_renamed = editor_data.can_be_renamed
-	toggle_collapse.emit_signal("toggled", editor_data.collapsed)
 	toggle_collapse.pressed = editor_data.collapsed
 
-	name_label.text = name
+	if toggle_collapse.pressed:
+		collapse()
+
+	name_line_edit.text = name
 
 
 func set_slot_side(value: int) -> void:

@@ -31,7 +31,6 @@ var _popup_titles = {
 var _zoom_step: = 0.1
 var _zoom_min: = 0.2
 var _zoom_max: = 5.0
-var _undoredo: = UndoRedo.new()
 
 onready var _graph: PGEGraph = graph_class.new()
 
@@ -120,8 +119,13 @@ func _on_ExportButton_pressed() -> void:
 
 func _on_AddNodeButton_pressed() -> void:
 	var position: Vector2 = panel.get_local_mouse_position()
+	var new_pge_node = pge_node_packed_scene.instance()
 
-	add_node(pge_node_packed_scene, position)
+	PGE.undoredo_add_node(new_pge_node, nodes)
+
+	_initialize_node(new_pge_node, position - new_pge_node.header.rect_size / 2.0)
+	new_pge_node.grab_focus()
+	refresh_panel_size()
 
 
 func _on_ZoomIn_pressed() -> void:
@@ -149,28 +153,20 @@ func _on_ZoomReset_pressed() -> void:
 
 
 func _on_Undo_pressed() -> void:
-	if not _undoredo.is_commiting_action():
-		_undoredo.undo()
+	if not PGE.undoredo.is_commiting_action():
+		PGE.undoredo.undo()
 
 
 func _on_Redo_pressed() -> void:
-	if not _undoredo.is_commiting_action():
-		_undoredo.redo()
+	if not PGE.undoredo.is_commiting_action():
+		PGE.undoredo.redo()
 
 
 func _on_pge_node_tree_exited(pge_node: PanelContainer) -> void:
 	refresh_panel_size()
 
 
-func _on_pge_node_drag_started(pge_node: PanelContainer) -> void:
-	_undoredo.create_action("Move Node")
-	_undoredo.add_undo_method(pge_node, "move_to", pge_node.rect_position)
-	pass
-
-
-func _on_pge_node_dragged(ammount: Vector2, pge_node) -> void:
-	pge_node.move(ammount)
-
+func _on_pge_node_dragged(pge_node) -> void:
 	if pge_node.rect_position.x < 0:
 		pge_node.rect_position.x = 0
 
@@ -186,88 +182,7 @@ func _on_pge_node_dragged(ammount: Vector2, pge_node) -> void:
 
 
 func _on_pge_node_drag_ended(pge_node) -> void:
-	_undoredo.add_do_method(pge_node, "move_to", pge_node.rect_position)
-	_undoredo.commit_action()
 	refresh_panel_size()
-
-
-func _on_pge_node_collapse_toggled(pressed: bool, pge_node) -> void:
-	_undoredo.create_action("Toggle Collapse")
-
-	if pressed:
-		_undoredo.add_do_method(pge_node, "collapse")
-		_undoredo.add_undo_method(pge_node, "expand")
-	else:
-		_undoredo.add_do_method(pge_node, "expand")
-		_undoredo.add_undo_method(pge_node, "collapse")
-
-	_undoredo.commit_action()
-
-
-func _on_pge_node_connection_requested(from_slot, to_slot) -> void:
-	_undoredo.create_action("Connect Nodes")
-	_undoredo.add_do_method(from_slot, "connect_to", to_slot)
-	_undoredo.add_undo_method(from_slot, "disconnect_to", to_slot)
-	_undoredo.commit_action()
-
-
-func _on_pge_node_disconnection_requested(from_slot, to_slot) -> void:
-	_undoredo.create_action("Connect Nodes")
-	_undoredo.add_do_method(from_slot, "disconnect_to", to_slot)
-	_undoredo.add_undo_method(from_slot, "connect_to", to_slot)
-	_undoredo.commit_action()
-
-
-func _on_pge_node_add_block_requested(new_block, pge_node) -> void:
-	_undoredo.create_action("Add Block")
-	_undoredo.add_do_method(pge_node.blocks, "add_child", new_block)
-	_undoredo.add_do_reference(new_block)
-	_undoredo.add_undo_method(pge_node.blocks, "remove_child", new_block)
-	_undoredo.add_undo_reference(new_block)
-	_undoredo.commit_action()
-	pass
-
-
-func _on_pge_node_delete_pressed(pge_node) -> void:
-	_undoredo.create_action("Delete Node")
-	# Connections TO pge_node
-	for edge in pge_node.slot.edges:
-		if edge.is_inside_tree():
-			_undoredo.add_undo_reference(edge)
-			_undoredo.add_do_method(edge.get_parent(), "remove_child", edge)
-			_undoredo.add_undo_method(edge.get_parent(), "add_child", edge)
-	# Connections FROM pge_node
-	for block in pge_node.blocks.get_children():
-		for slot in block.slots.get_children():
-			for edge in slot.edges:
-				if edge.is_inside_tree():
-					_undoredo.add_undo_reference(edge)
-					_undoredo.add_do_method(edge.get_parent(), "remove_child", edge)
-					_undoredo.add_undo_method(edge.get_parent(), "add_child", edge)
-
-	_undoredo.add_do_method(nodes, "remove_child", pge_node)
-	_undoredo.add_undo_reference(pge_node)
-	_undoredo.add_undo_method(nodes, "add_child", pge_node)
-
-	_undoredo.commit_action()
-
-
-func _on_pge_node_rename_requested(intended_name: String, pge_node) -> void:
-	var new_name: = intended_name
-
-	# Little hack to avoid the @ on the autorenaming of godot
-	var i: = 2
-	while nodes.get_node_or_null(new_name):
-		new_name = intended_name + i as String
-		i += 1
-
-	_undoredo.create_action("Rename Node")
-	_undoredo.add_do_property(pge_node, "name", new_name)
-	_undoredo.add_do_property(pge_node.name_label, "text", new_name)
-
-	_undoredo.add_undo_property(pge_node, "name", pge_node.name)
-	_undoredo.add_undo_property(pge_node.name_label, "text", pge_node.name)
-	_undoredo.commit_action()
 
 
 # BUTTON_WHEEL events doesn't work with button shortcuts, so zoom shortcut is implemented here
@@ -295,41 +210,26 @@ func _input(event: InputEvent) -> void:
 
 
 func clear() -> void:
-	for child in nodes.get_children():
-		child.queue_free()
+	for node in nodes.get_children():
+		node.queue_free()
 
 
-func add_node(packed_scene: PackedScene, position: = Vector2.ZERO) -> PanelContainer:
-	var new_pge_node = _initialize_node(packed_scene.instance())
-
-	new_pge_node.move_to(position - new_pge_node.header.get_size() / 2.0)
-
-	refresh_panel_size()
-
+func add_node() -> PanelContainer:
+	var new_pge_node = pge_node_packed_scene.instance()
+	nodes.add_child(new_pge_node, true)
+	_initialize_node(new_pge_node)
 	return new_pge_node
 
 
-func _initialize_node(pge_node: PanelContainer) -> PanelContainer:
-	_undoredo.create_action("Add Node")
-	_undoredo.add_do_method(nodes, "add_child", pge_node, true)
-	_undoredo.add_do_reference(pge_node)
-	_undoredo.add_undo_method(nodes, "remove_child", pge_node)
-	_undoredo.commit_action()
-
+func _initialize_node(pge_node: PanelContainer, position: = Vector2()) -> void:
 	pge_node.connect("tree_exited", self, "_on_pge_node_tree_exited", [pge_node])
 	pge_node.connect("drag_started", self, "_on_pge_node_drag_started", [pge_node])
 	pge_node.connect("dragged", self, "_on_pge_node_dragged", [pge_node])
 	pge_node.connect("drag_ended", self, "_on_pge_node_drag_ended", [pge_node])
-	pge_node.connect("collapse_toggled", self, "_on_pge_node_collapse_toggled", [pge_node])
-	pge_node.connect("connect_requested", self, "_on_pge_node_connection_requested")
-	pge_node.connect("disconnect_requested", self, "_on_pge_node_disconnection_requested")
-	pge_node.connect("add_block_requested", self, "_on_pge_node_add_block_requested", [pge_node])
-	pge_node.connect("delete_pressed", self, "_on_pge_node_delete_pressed", [pge_node])
-	pge_node.connect("rename_requested", self, "_on_pge_node_rename_requested", [pge_node])
-	pge_node.grab_focus()
 	pge_node.slot.edges_parent_path = edges.get_path()
 
-	return pge_node
+	if position:
+		pge_node.move_to(position)
 
 
 func open_graph(graph: PGEGraph) -> void:
@@ -358,9 +258,8 @@ func _open_graph_from_node_dfs(graph: PGEGraph, node_data: Dictionary) -> Node:
 	if not pge_node:
 		var node_filename: String = node_data.editor_data.filename
 
-		pge_node = add_node(load(node_filename))
+		pge_node = add_node()
 		pge_node.set_editor_data(node_data.editor_data)
-		pge_node.release_focus()
 
 		# Get or create it's blocks
 		for block_data in node_data.blocks:
@@ -368,7 +267,7 @@ func _open_graph_from_node_dfs(graph: PGEGraph, node_data: Dictionary) -> Node:
 			var pge_block = pge_node.blocks.get_node_or_null(block_data.editor_data.name)
 
 			if not pge_block:
-				pge_block = pge_node.add_block(load(block_filename))
+				pge_block = pge_node.add_block(block_filename)
 
 			pge_block.set_editor_data(block_data.editor_data)
 			pge_block.set_data(block_data.data)
@@ -406,7 +305,7 @@ func load_graph(file_path: String) -> void:
 	graph_name.text = file_path.get_file().trim_suffix(".tres")
 	_graph = resource
 
-	open_graph(_graph)
+	open_graph(_graph) # TODO: opening the graph doesn't has to register everything under UndoRedo
 	emit_signal("graph_loaded")
 
 

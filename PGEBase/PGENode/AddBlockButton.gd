@@ -15,30 +15,34 @@ func _ready():
 
 
 func _on_popup_menu_index_pressed(index: int) -> void:
-	var block = pge_node.add_block(popup.get_item_metadata(index))
+	var pge_block = popup.get_item_metadata(index).instance()
 
-	if not _block_count.has(block.filename):
-		_block_count[block.filename] = 1
+	PGE.undoredo_add_block(pge_block, pge_node.blocks)
+
+	pge_node._initialize_block(pge_block)
+	# BUG: if the block is created by loading a graph the counter will not work
+	if not _block_count.has(pge_block.filename):
+		_block_count[pge_block.filename] = 1
 	else:
-		_block_count[block.filename] += 1
+		_block_count[pge_block.filename] += 1
 
-	if block.max_per_node and _block_count[block.filename] >= block.max_per_node:
+	if pge_block.max_per_node and _block_count[pge_block.filename] >= pge_block.max_per_node:
 		popup.set_item_disabled(index, true)
 		pass
 
 
-func _on_block_tree_exited(block) -> void:
-	if block.max_per_node <= 0: return
+func _on_pge_block_tree_exited(pge_block) -> void:
+	if pge_block.max_per_node <= 0: return
 
 	for i in popup.get_item_count():
 		var packed_scene: PackedScene = popup.get_item_metadata(i)
 
-		if packed_scene == load(block.filename):
-			_block_count[block.filename] -= 1
+		if packed_scene == load(pge_block.filename):
+			_block_count[pge_block.filename] -= 1
 			popup.set_item_disabled(i, false)
 
-			if _block_count[block.filename] <= 0:
-				_block_count.erase(block.filename)
+			if _block_count[pge_block.filename] <= 0:
+				_block_count.erase(pge_block.filename)
 
 			break
 
@@ -49,4 +53,4 @@ func set_block_options(blocks_data: Array) -> void:
 	for i in range(blocks_data.size()):
 		var data = blocks_data[i]
 		popup.add_item(data.text)
-		popup.set_item_metadata(i, data.metadata)
+		popup.set_item_metadata(i, load(data.scene_path))

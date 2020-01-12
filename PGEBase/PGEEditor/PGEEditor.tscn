@@ -56,28 +56,28 @@ scancode = 16777224
 [sub_resource type="ShortCut" id=11]
 shortcut = SubResource( 10 )
 
-[sub_resource type="InputEventKey" id=15]
+[sub_resource type="InputEventKey" id=12]
 control = true
 command = true
 pressed = true
 scancode = 90
 
-[sub_resource type="ShortCut" id=16]
-shortcut = SubResource( 15 )
+[sub_resource type="ShortCut" id=13]
+shortcut = SubResource( 12 )
 
-[sub_resource type="InputEventKey" id=17]
+[sub_resource type="InputEventKey" id=14]
 shift = true
 control = true
 command = true
 scancode = 90
 
-[sub_resource type="ShortCut" id=18]
-shortcut = SubResource( 17 )
+[sub_resource type="ShortCut" id=15]
+shortcut = SubResource( 14 )
 
-[sub_resource type="StyleBoxFlat" id=12]
+[sub_resource type="StyleBoxFlat" id=16]
 bg_color = Color( 0.113725, 0.133333, 0.152941, 1 )
 
-[sub_resource type="StyleBoxFlat" id=13]
+[sub_resource type="StyleBoxFlat" id=17]
 content_margin_left = 20.0
 content_margin_right = 20.0
 bg_color = Color( 0.113725, 0.133333, 0.152941, 0.733333 )
@@ -86,7 +86,7 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
-[sub_resource type="Animation" id=14]
+[sub_resource type="Animation" id=18]
 length = 0.5
 tracks/0/type = "value"
 tracks/0/path = NodePath(".:rect_scale")
@@ -232,7 +232,7 @@ margin_left = 405.0
 margin_right = 433.0
 margin_bottom = 24.0
 focus_mode = 0
-shortcut = SubResource( 16 )
+shortcut = SubResource( 13 )
 icon = ExtResource( 7 )
 
 [node name="Redo" type="Button" parent="Header/Items"]
@@ -240,7 +240,7 @@ margin_left = 437.0
 margin_right = 465.0
 margin_bottom = 24.0
 focus_mode = 0
-shortcut = SubResource( 18 )
+shortcut = SubResource( 15 )
 icon = ExtResource( 8 )
 
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
@@ -250,7 +250,7 @@ margin_top = 26.0
 mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_styles/bg = SubResource( 12 )
+custom_styles/bg = SubResource( 16 )
 
 [node name="Panel" type="Panel" parent="ScrollContainer"]
 margin_right = 1024.0
@@ -280,14 +280,14 @@ grow_horizontal = 2
 grow_vertical = 2
 rect_scale = Vector2( 0.926261, 0.768455 )
 rect_pivot_offset = Vector2( 58, 11 )
-custom_styles/normal = SubResource( 13 )
+custom_styles/normal = SubResource( 17 )
 text = "Message"
 align = 1
 valign = 1
 script = ExtResource( 9 )
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Messages"]
-anims/show_message = SubResource( 14 )
+anims/show_message = SubResource( 18 )
 
 [node name="Timer" type="Timer" parent="Messages"]
 wait_time = 3.0

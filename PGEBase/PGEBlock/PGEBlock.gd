@@ -12,6 +12,8 @@ extends PanelContainer
 	be loaded by calling `load_data`.
 """
 
+signal data_changed(data)
+
 onready var content: PanelContainer = $Parts/Content
 onready var slots = $Parts/Slots
 
@@ -73,15 +75,16 @@ func _on_focus_exited() -> void:
 func _on_PopupMenu_index_pressed(index: int) -> void:
 	match index:
 		0: # Swap slot side
-			if slot_side == SlotSide.LEFT:
-				set_slot_side(SlotSide.RIGHT)
+			var new_side: int
 
+			if slot_side == SlotSide.LEFT:
+				new_side = SlotSide.RIGHT
 			elif slot_side == SlotSide.RIGHT:
-				set_slot_side(SlotSide.LEFT)
+				new_side = SlotSide.LEFT
+
+			PGE.undoredo_block_set_slot_side(self, new_side)
 		1: # Delete
-			# TODO: block deletion with undoredo
-			queue_free()
-			pass
+			PGE.undoredo_delete_block(self)
 		_:
 			push_warning("Nothing implemented for index %s." % index)
 
@@ -123,10 +126,18 @@ func get_connections() -> Array:
 			var edge: PGEEdge = edges_from_self.front()
 			if edge:
 				connections.append(edge.to_slot.controller.name)
-#			else:
-#				connections.append("")
 
 	return connections
+
+
+func get_edges() -> Array:
+	var edges: = []
+
+	for slot in slots.get_children():
+		for edge in slot.edges:
+			edges.append(edge)
+
+	return edges
 
 
 func refresh_slots_edges() -> void:
@@ -162,8 +173,6 @@ func set_slots_controller(object: Object) -> void:
 func set_slots_edges_parent_path(node_path: NodePath) -> void:
 	for slot in slots.get_children():
 		slot.edges_parent_path = node_path
-
-	pass
 
 
 func set_slots_number(value: int) -> void:
@@ -215,5 +224,9 @@ func set_editor_data(data: Dictionary) -> void:
 	set_slot_side(data.slot_side)
 
 
-func get_data(): pass
-func set_data(data): pass
+func get_data() -> Dictionary:
+	return {}
+
+
+func set_data(data: Dictionary) -> void:
+	return

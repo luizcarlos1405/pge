@@ -27,8 +27,6 @@ var popup_menu_rect_min_size = Vector2(50, 2)
 var radius: = 20.0 setget set_radius
 var edges: = []
 
-var _connecting_edge: PGEEdge
-
 
 func _ready() -> void:
 	connect("gui_input", self, "_on_gui_input")
@@ -52,17 +50,16 @@ func _on_edge_tree_exiting(edge) -> void:
 
 func start_connecting() -> PGEEdge:
 	var parent = get_node_or_null(edges_parent_path)
-	_connecting_edge = PGEEdge.new()
+	var edge: = PGEEdge.new()
 
 	if not parent:
 		push_warning("Failed to get node on path %s, adding edge as child of the slot." % edges_parent_path)
 		parent = self
 
-	parent.add_child(_connecting_edge, true)
+	parent.add_child(edge)
+	edge.start_connecting(self)
 
-	_connecting_edge.start_connecting(self)
-
-	return _connecting_edge
+	return edge
 
 
 func receive_connection(edge: PGEEdge):
@@ -78,14 +75,14 @@ func receive_connection(edge: PGEEdge):
 	edge.connect("tree_exiting", edge.to_slot, "_on_edge_tree_exiting", [edge])
 
 
-func connect_to(pge_slot) -> void:
-	if not _connecting_edge:
-		start_connecting()
+# An edge can be pre-created calling start_connecting before connect_to
+func connect_to(pge_slot, pre_created_edge = null) -> void:
+	var edge: PGEEdge = pre_created_edge
+	if not is_instance_valid(edge):
+		edge = start_connecting()
 
-	pge_slot.receive_connection(_connecting_edge)
-	_connecting_edge.refresh()
-
-	_connecting_edge = null
+	pge_slot.receive_connection(edge)
+	edge.refresh()
 
 
 func disconnect_to(pge_slot) -> void:
@@ -130,8 +127,7 @@ func can_drop_data(position: Vector2, edge: PGEEdge) -> bool:
 
 
 func drop_data(position: Vector2, edge: PGEEdge) -> void:
-	controller.emit_signal("connect_requested", edge.connecting_slot, self)
-#	receive_connection(edge)
+	PGE.undoredo_connect_slots(edge.connecting_slot, self, edge)
 
 
 func refresh_edges() -> void:

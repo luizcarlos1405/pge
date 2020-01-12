@@ -30,6 +30,10 @@ config/name="PGE"
 run/main_scene="res://PGEBase/PGEEditor/PGEEditor.tscn"
 config/icon="res://icon.png"
 
+[autoload]
+
+PGE="*res://PGEBase/autoload/PGE.gd"
+
 [debug]
 
 gdscript/warnings/unused_variable=false
