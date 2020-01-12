@@ -98,8 +98,16 @@ func _on_Resizer_gui_input(event: InputEvent) -> void:
 
 	elif event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
-			resizing = event.pressed
-			_reference_position = event.position
+			if event.pressed:
+					resizing = true
+					PGE.undoredo.set_meta("block_start_min_rect_size", rect_min_size)
+					_reference_position = event.position
+			else:
+				if resizing:
+					var old_rect_min_size: Vector2 = PGE.undoredo.get_meta("block_start_min_rect_size")
+					var new_rect_min_size: = rect_min_size
+					PGE.undoredo_resize_block(self, old_rect_min_size, new_rect_min_size)
+					resizing = false
 
 
 func connect_to(slot_index: int, pge_node) -> void:

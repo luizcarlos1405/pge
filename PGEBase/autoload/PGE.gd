@@ -20,6 +20,15 @@ func undoredo_move_node(pge_node, from_position: Vector2, to_position: Vector2) 
 	undoredo.commit_action()
 
 
+func undoredo_resize_node(pge_node, old_rect: Rect2, new_rect: Rect2) -> void:
+	undoredo.create_action("Resize Node")
+	undoredo.add_do_property(pge_node, "rect_position", new_rect.position)
+	undoredo.add_do_property(pge_node, "rect_size", new_rect.size)
+	undoredo.add_undo_property(pge_node, "rect_position", old_rect.position)
+	undoredo.add_undo_property(pge_node, "rect_size", old_rect.size)
+	undoredo.commit_action()
+
+
 func undoredo_rename_node(pge_node, old_name: String, new_name: String) -> void:
 	undoredo.create_action("Node Rename")
 	undoredo.add_do_property(pge_node, "name", new_name)
@@ -90,6 +99,15 @@ func undoredo_move_block(pge_block, from_index: int, to_index: int) -> void:
 	undoredo.create_action("Move Block")
 	undoredo.add_do_method(parent, "move_child", pge_block, to_index)
 	undoredo.add_undo_method(parent, "move_child", pge_block, from_index)
+	undoredo.commit_action()
+
+
+func undoredo_resize_block(pge_block, old_rect_min_size: Vector2, new_rect_min_size: Vector2) -> void:
+	undoredo.create_action("Resize Block")
+	undoredo.add_do_property(pge_block, "rect_min_size", new_rect_min_size)
+#	undoredo.add_do_property(pge_block, "rect_size", new_rect_min_size)
+	undoredo.add_undo_property(pge_block, "rect_min_size", old_rect_min_size)
+#	undoredo.add_undo_property(pge_block, "rect_size", new_rect_min_size)
 	undoredo.commit_action()
 
 

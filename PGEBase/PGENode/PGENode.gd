@@ -97,14 +97,21 @@ func _on_gui_input(event: InputEvent) -> void:
 				if event.position.x <= _resize_margin:
 					resizing = true
 					_resize_side = "left"
+					PGE.undoredo.set_meta("node_start_rect", get_rect())
 
 				elif event.position.x >= rect_size.x - _resize_margin:
 					resizing = true
 					_resize_side = "right"
+					PGE.undoredo.set_meta("node_start_rect", get_rect())
 
 			else:
 				set_default_cursor_shape(Control.CURSOR_ARROW)
-				resizing = false
+
+				if resizing:
+					var old_rect: Rect2 = PGE.undoredo.get_meta("node_start_rect")
+					var new_rect: = get_rect()
+					PGE.undoredo_resize_node(self, old_rect, new_rect)
+					resizing = false
 
 		elif event.button_index == BUTTON_RIGHT:
 			if event.pressed:
