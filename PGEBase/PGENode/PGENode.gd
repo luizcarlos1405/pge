@@ -6,30 +6,18 @@ extends PanelContainer
 	Should only contain blocks that represent connections and/or data.
 """
 
-signal drag_started
-signal dragged
-signal drag_ended
 signal collapse_toggled(pressed)
-signal delete_requested
-
-
-onready var slot: = $Parts/Menu/PGESlot
-onready var collapsed_slot: = $Parts/Menu/CollapsedSlot
-onready var header: = $Parts/Header
-onready var blocks: = $Parts/Blocks
-onready var toggle_collapse: = $Parts/Header/ToggleCollapse
-onready var add_block_button: MenuButton = $Parts/Menu/AddBlockButton
-onready var name_line_edit: LineEdit = $Parts/Header/Name
 
 enum SlotSide {LEFT, RIGHT}
 
 export(SlotSide) var slot_side: = SlotSide.LEFT setget set_slot_side
-export var style_box_normal: StyleBox = preload("PGENodePanelNormal.tres")
-export var style_box_focus: StyleBox = preload("PGENodePanelFocus.tres")
+export var stylebox_normal: StyleBox = preload("PGENodePanelNormal.tres")
+export var stylebox_selected: StyleBox = preload("PGENodePanelSelected.tres")
 export var can_be_deleted: = true setget set_can_be_deleted
 export var can_be_renamed: = true
 
 var resizing: = false
+var selected: = false setget set_selected
 
 var _resize_side: String
 var _resize_margin: = 4
@@ -39,19 +27,29 @@ var _header_pressed: = false
 var _move_reference: Vector2
 var _default_block_scene_path: = "res://PGEBase/PGEBlock/PGEBlock.tscn"
 
+onready var slot: = $Parts/Menu/PGESlot
+onready var collapsed_slot: = $Parts/Menu/CollapsedSlot
+onready var header: = $Parts/Header
+onready var blocks: = $Parts/Blocks
+onready var toggle_collapse: = $Parts/Header/ToggleCollapse
+onready var add_block_button: MenuButton = $Parts/Menu/AddBlockButton
+onready var name_line_edit: LineEdit = $Parts/Header/Name
+
+
+func _init() -> void:
+	add_to_group("pge_node")
+
 
 func _ready() -> void:
 	if not Engine.editor_hint:
 		slot.controller = self
 		connect("gui_input", self, "_on_gui_input")
-		connect("focus_entered", self, "_on_focus_entered")
-		connect("focus_exited", self, "_on_focus_exited")
 
 		$PopupMenu.connect("index_pressed", self, "_on_PopupMenu_index_pressed")
 		toggle_collapse.connect("toggled", self, "_on_ToggleCollapse_toggled")
 		header.connect("gui_input", self, "_on_Header_gui_input")
-		name_line_edit.connect("text_entered", self, "_on_LineEdit_text_entered")
-		name_line_edit.connect("focus_exited", self, "_on_LineEdit_focus_exited")
+		name_line_edit.connect("text_entered", self, "_on_Name_text_entered")
+		name_line_edit.connect("focus_exited", self, "_on_Name_focus_exited")
 		name_line_edit.text = name
 
 		$Parts.connect("sort_children", self, "_on_Parts_sort_children")
@@ -90,10 +88,15 @@ func _on_gui_input(event: InputEvent) -> void:
 
 				refresh_blocks_slots()
 
-
 	elif event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
 			if event.pressed:
+				if event.shift:
+					PGE.toggle_selection(self)
+				else:
+					if not PGE.is_selected(self):
+						PGE.select_only(self)
+
 				if event.position.x <= _resize_margin:
 					resizing = true
 					_resize_side = "left"
@@ -120,15 +123,6 @@ func _on_gui_input(event: InputEvent) -> void:
 					pass
 
 
-func _on_focus_entered() -> void:
-	raise()
-	add_stylebox_override("panel", style_box_focus)
-
-
-func _on_focus_exited() -> void:
-	add_stylebox_override("panel", style_box_normal)
-
-
 func _on_PopupMenu_index_pressed(index: int) -> void:
 	match index:
 		0: # Swap slot side
@@ -152,13 +146,13 @@ func _on_ToggleCollapse_toggled(pressed: bool) -> void:
 
 func _on_Header_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		if _header_pressed:
+		if _header_pressed and not event.shift:
 			if not _moving:
 				_moving = true
-				PGE.undoredo.set_meta("node_start_position", rect_position)
+				PGE.undoredo.set_meta("%s_start_position" % get_instance_id(), rect_position)
 
-			move(event.position - _move_reference)
-			emit_signal("dragged")
+			var ammount: Vector2 = event.position - _move_reference
+			PGE.move_selection(ammount)
 
 	elif event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
@@ -176,15 +170,13 @@ func _on_Header_gui_input(event: InputEvent) -> void:
 				if _moving:
 					_moving = false
 
-					var start_position: Vector2 = PGE.undoredo.get_meta("node_start_position")
+					var start_position: Vector2 = PGE.undoredo.get_meta("%s_start_position" % get_instance_id())
 					var current_position: = rect_position
 					if start_position != current_position:
-						PGE.undoredo_move_node(self, start_position, current_position)
-
-						emit_signal("drag_ended")
+						PGE.undoredo_move_selection(current_position - start_position)
 
 # Rename
-func _on_LineEdit_text_entered(intended_name: String)  -> void:
+func _on_Name_text_entered(intended_name: String)  -> void:
 	if intended_name:
 		var old_name: = name
 		var new_name: = intended_name
@@ -202,7 +194,7 @@ func _on_LineEdit_text_entered(intended_name: String)  -> void:
 	name_line_edit.release_focus()
 
 
-func _on_LineEdit_focus_exited() -> void:
+func _on_Name_focus_exited() -> void:
 	name_line_edit.deselect()
 	name_line_edit.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_line_edit.text = name
@@ -249,6 +241,7 @@ func _on_pge_block_gui_input(event: InputEvent, block) -> void:
 				if _moving_block:
 					var start_index: int = PGE.undoredo.get_meta("start_index")
 					var current_index: int = _moving_block.get_index()
+
 					if current_index != start_index:
 						PGE.undoredo_move_block(_moving_block, start_index, current_index)
 
@@ -408,6 +401,15 @@ func set_editor_data(editor_data: Dictionary) -> void:
 		collapse()
 
 	name_line_edit.text = name
+
+
+func set_selected(value: bool) -> void:
+	selected = value
+	if selected:
+		raise()
+		add_stylebox_override("panel", stylebox_selected)
+	else:
+		add_stylebox_override("panel", stylebox_normal)
 
 
 func set_slot_side(value: int) -> void:

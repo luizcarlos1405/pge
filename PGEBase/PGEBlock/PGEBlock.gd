@@ -14,10 +14,9 @@ extends PanelContainer
 
 signal data_changed(data)
 
-onready var content: PanelContainer = $Parts/Content
-onready var slots = $Parts/Slots
-
 enum SlotSide {LEFT, RIGHT}
+
+const Slot: = preload("res://PGEBase/PGESlot/PGESlot.tscn")
 
 export var type: = "None"
 export var max_per_node: = 0
@@ -27,14 +26,20 @@ export var resizable: = true
 export var can_be_deleted: = true
 export var can_be_moved: = true
 export(SlotSide) var slot_side: = SlotSide.RIGHT setget set_slot_side
-export(StyleBox) var style_box_normal = preload("PGEBlockPanelNormal.tres")
-export(StyleBox) var style_box_focus = preload("PGEBlockPanelFocus.tres")
+export(StyleBox) var stylebox_normal = preload("PGEBlockPanelNormal.tres")
+export(StyleBox) var stylebox_selected = preload("PGEBlockPanelSelected.tres")
 
-const Slot: = preload("res://PGEBase/PGESlot/PGESlot.tscn")
-
-var resizing = false
+var resizing: = false
+var selected: = false setget set_selected
 
 var _reference_position: Vector2
+
+onready var content: PanelContainer = $Parts/Content
+onready var slots = $Parts/Slots
+
+
+func _init() -> void:
+	add_to_group("pge_block")
 
 
 func _ready() -> void:
@@ -47,8 +52,6 @@ func _ready() -> void:
 		$Resizer.set_visible(resizable)
 
 		connect("gui_input", self, "_on_gui_input")
-		connect("focus_entered", self, "_on_focus_entered")
-		connect("focus_exited", self, "_on_focus_exited")
 
 		$PopupMenu.connect("index_pressed", self, "_on_PopupMenu_index_pressed")
 		$Resizer.connect("gui_input", self, "_on_Resizer_gui_input")
@@ -56,20 +59,18 @@ func _ready() -> void:
 
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
-		if event.button_index == BUTTON_RIGHT:
-			if event.pressed:
+		if event.pressed:
+			if event.button_index == BUTTON_LEFT:
+				if not event.shift:
+					PGE.select_only(self)
+				else:
+					PGE.toggle_selection(self)
+
+			elif event.button_index == BUTTON_RIGHT:
 				if not get_tree().is_input_handled():
 					get_tree().set_input_as_handled()
 					$PopupMenu.popup(Rect2(get_global_mouse_position(), Vector2(1, 1)))
 					pass
-
-
-func _on_focus_entered() -> void:
-	add_stylebox_override("panel", style_box_focus)
-
-
-func _on_focus_exited() -> void:
-	add_stylebox_override("panel", style_box_normal)
 
 
 func _on_PopupMenu_index_pressed(index: int) -> void:
@@ -214,6 +215,15 @@ func set_slots_colors(value: PoolColorArray) -> void:
 		var slots_to_color: int = min(slots.get_child_count(), slots_colors.size()) as int
 		for i in range(slots_to_color):
 			slots.get_child(i).color = slots_colors[i]
+
+
+func set_selected(value: bool) -> void:
+	selected = value
+
+	if selected:
+		add_stylebox_override("panel", stylebox_selected)
+	else:
+		add_stylebox_override("panel", stylebox_normal)
 
 
 func get_editor_data() -> Dictionary:

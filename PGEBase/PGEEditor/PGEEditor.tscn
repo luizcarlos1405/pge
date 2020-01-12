@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=2]
+[gd_scene load_steps=29 format=2]
 
 [ext_resource path="res://PGEBase/GodotAlienTheme.tres" type="Theme" id=1]
 [ext_resource path="res://PGEBase/PGEEditor/PGEEditor.gd" type="Script" id=2]
@@ -8,7 +8,8 @@
 [ext_resource path="res://PGEBase/assets/icons/zoom_more.svg" type="Texture" id=6]
 [ext_resource path="res://PGEBase/assets/icons/undo.svg" type="Texture" id=7]
 [ext_resource path="res://PGEBase/assets/icons/redo.svg" type="Texture" id=8]
-[ext_resource path="res://PGEBase/PGEEditor/Messages.gd" type="Script" id=9]
+[ext_resource path="res://PGEBase/PGEEditor/Panel.gd" type="Script" id=9]
+[ext_resource path="res://PGEBase/PGEEditor/Messages.gd" type="Script" id=10]
 
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0.113725, 0.133333, 0.152941, 1 )
@@ -135,6 +136,7 @@ current_dir = "/home/luizcarlos1405/Palco/Dev/Projetos/Pasme"
 current_path = "/home/luizcarlos1405/Palco/Dev/Projetos/Pasme/"
 
 [node name="Header" type="Panel" parent="."]
+editor/display_folded = true
 anchor_right = 1.0
 margin_bottom = 26.0
 mouse_filter = 2
@@ -253,10 +255,13 @@ size_flags_vertical = 3
 custom_styles/bg = SubResource( 16 )
 
 [node name="Panel" type="Panel" parent="ScrollContainer"]
+editor/display_folded = true
 margin_right = 1024.0
 margin_bottom = 574.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+script = ExtResource( 9 )
+selection_color = Color( 0.105882, 1, 0.607843, 1 )
 
 [node name="Edges" type="Control" parent="ScrollContainer/Panel"]
 anchor_right = 1.0
@@ -284,7 +289,7 @@ custom_styles/normal = SubResource( 17 )
 text = "Message"
 align = 1
 valign = 1
-script = ExtResource( 9 )
+script = ExtResource( 10 )
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Messages"]
 anims/show_message = SubResource( 18 )

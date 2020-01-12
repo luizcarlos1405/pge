@@ -1,16 +1,113 @@
 extends Node
+# Deals with selection and UndoRedo operations
 
+signal selection_moved
+signal selection_dragged
+
+const SELECTED_GROUP_NAME: = "selected"
 
 var undoredo: = UndoRedo.new()
 
 
+func select(node: Node) -> void:
+	node.add_to_group(SELECTED_GROUP_NAME)
+	node.set_selected(true)
+
+
+func select_only(node: Node) -> void:
+	deselect_all()
+	select(node)
+
+
+func select_rect(rect: Rect2, intersecting: = false) -> void:
+	for pge_node in get_tree().get_nodes_in_group("pge_node"):
+		if intersecting:
+			if rect.intersects(pge_node.get_rect()):
+				select(pge_node)
+		else:
+			if rect.encloses(pge_node.get_rect()):
+				select(pge_node)
+
+
+func deselect(node: Node) -> void:
+	node.remove_from_group(SELECTED_GROUP_NAME)
+	node.set_selected(false)
+
+
+func deselect_all() -> void:
+	for node in get_tree().get_nodes_in_group("selected"):
+		deselect(node)
+
+
+func is_selected(node: Node) -> bool:
+	return node.is_in_group(SELECTED_GROUP_NAME)
+
+
+func toggle_selection(node: Node) -> void:
+	if not is_selected(node):
+		select(node)
+	else:
+		deselect(node)
+	pass
+
+
+func move_selection(intended_ammount: Vector2) -> void:
+	var selection_rect: Rect2
+	var selected_nodes: = get_tree().get_nodes_in_group(SELECTED_GROUP_NAME)
+	var pge_nodes: = []
+
+	if not selected_nodes.empty():
+		selection_rect = selected_nodes[0].get_rect()
+
+		for node in selected_nodes:
+			if node.is_in_group("pge_node"):
+				selection_rect = selection_rect.merge(node.get_rect())
+				pge_nodes.append(node)
+
+		var target_position: = selection_rect.position + intended_ammount
+		if target_position.x < 0:
+			target_position.x = 0
+		if target_position.y < 0:
+			target_position.y = 0
+
+		var ammount: Vector2 = target_position - selection_rect.position
+		for pge_node in pge_nodes:
+			pge_node.move(ammount)
+
+		emit_signal("selection_dragged", selection_rect)
+
+func undoredo_move_selection(ammount: Vector2) -> void:
+	undoredo.create_action("Move Selection")
+	for node in get_tree().get_nodes_in_group(SELECTED_GROUP_NAME):
+		if node.is_in_group("pge_node"):
+			undoredo_move_node(node, node.rect_position - ammount, node.rect_position)
+
+	undoredo.add_do_method(self, "emit_signal", "selection_moved")
+	undoredo.add_undo_method(self, "emit_signal", "selection_moved")
+
+	undoredo.commit_action()
+
+
+func undoredo_delete_selection() -> void:
+	undoredo.create_action("Delete Selection")
+	for node in get_tree().get_nodes_in_group("selected"):
+		var parent: Node = node.get_parent()
+
+		if node.is_in_group("pge_node"):
+			undoredo_delete_node(node)
+		elif node.is_in_group("pge_block"):
+			undoredo_delete_block(node)
+
+	undoredo.commit_action()
+
+
 func undoredo_add_node(pge_node, parent) -> void:
+	select_only(pge_node)
 	undoredo.create_action("Add Node")
 	undoredo.add_do_reference(pge_node)
 	undoredo.add_do_method(parent, "add_child", pge_node, true)
 	undoredo.add_undo_method(parent, "remove_child", pge_node)
 	undoredo.commit_action()
-	pass
 
 
 func undoredo_move_node(pge_node, from_position: Vector2, to_position: Vector2) -> void:

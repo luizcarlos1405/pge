@@ -52,11 +52,15 @@ func _ready():
 	$Header/Items/LoadButton.connect("pressed", self, "_on_LoadButton_pressed")
 	$Header/Items/ExportButton.connect("pressed", self, "_on_ExportButton_pressed")
 	$Header/Items/AddNodeButton.connect("pressed", self, "_on_AddNodeButton_pressed")
+	$Header/Items/DeleteButton.connect("pressed", self, "_on_DeleteButton_pressed")
 	$Header/Items/ZoomIn.connect("pressed", self, "_on_ZoomIn_pressed")
 	$Header/Items/ZoomOut.connect("pressed", self, "_on_ZoomOut_pressed")
 	$Header/Items/ZoomReset.connect("pressed", self, "_on_ZoomReset_pressed")
 	$Header/Items/Undo.connect("pressed", self, "_on_Undo_pressed")
 	$Header/Items/Redo.connect("pressed", self, "_on_Redo_pressed")
+
+	PGE.connect("selection_dragged", self, "_on_PGE_selection_dragged")
+	PGE.connect("selection_moved", self, "_on_PGE_selection_moved")
 
 
 func _on_Panel_gui_input(event: InputEvent) -> void:
@@ -64,19 +68,21 @@ func _on_Panel_gui_input(event: InputEvent) -> void:
 		if Input.is_mouse_button_pressed(BUTTON_MIDDLE):
 			scroll_container.scroll_horizontal -= event.relative.x
 			scroll_container.scroll_vertical -= event.relative.y
-			pass
 
 	elif event is InputEventMouseButton:
-		if event.pressed:
-			var focused: Control = get_focus_owner()
-			if focused:
-				focused.release_focus()
+		if event.button_index == BUTTON_LEFT:
+			if event.pressed:
+				if not event.shift:
+					if get_focus_owner():
+						get_focus_owner().release_focus()
 
-			if event.button_index == BUTTON_MIDDLE:
+					PGE.deselect_all()
+
+		elif event.button_index == BUTTON_MIDDLE:
+			if event.pressed:
 				panel.mouse_default_cursor_shape = Control.CURSOR_DRAG
-
-		else:
-			panel.mouse_default_cursor_shape = Control.CURSOR_ARROW
+			else:
+				panel.mouse_default_cursor_shape = Control.CURSOR_ARROW
 
 
 func _on_FileDialog_file_selected(file_path: String) -> void:
@@ -127,8 +133,11 @@ func _on_AddNodeButton_pressed() -> void:
 	PGE.undoredo_add_node(new_pge_node, nodes)
 
 	_initialize_node(new_pge_node, position - new_pge_node.header.rect_size / 2.0)
-	new_pge_node.grab_focus()
 	refresh_panel_size()
+
+
+func _on_DeleteButton_pressed() -> void:
+	PGE.undoredo_delete_selection()
 
 
 func _on_ZoomIn_pressed() -> void:
@@ -169,22 +178,16 @@ func _on_pge_node_tree_exited(pge_node: PanelContainer) -> void:
 	refresh_panel_size()
 
 
-func _on_pge_node_dragged(pge_node) -> void:
-	if pge_node.rect_position.x < 0:
-		pge_node.rect_position.x = 0
-
-	if pge_node.rect_position.y < 0:
-		pge_node.rect_position.y = 0
-
+func _on_PGE_selection_dragged(selection_rect: Rect2) -> void:
 	# Resize panel only if it would get bigger
-	var node_end: Vector2 = pge_node.rect_position + pge_node.rect_size
+	var selection_end: Vector2 = selection_rect.end
 	var panel_end: Vector2 = panel.rect_size
 
-	if node_end.x > panel_end.x or node_end.y > panel_end.y:
+	if selection_end.x > panel_end.x or selection_end.y > panel_end.y:
 		refresh_panel_size()
 
 
-func _on_pge_node_drag_ended(pge_node) -> void:
+func _on_PGE_selection_moved() -> void:
 	refresh_panel_size()
 
 
@@ -227,12 +230,15 @@ func add_node() -> PanelContainer:
 	return new_pge_node
 
 
-func _initialize_node(pge_node: PanelContainer, position: = Vector2()) -> void:
+func _initialize_node(pge_node: PanelContainer, intended_position: = Vector2()) -> void:
 	pge_node.connect("tree_exited", self, "_on_pge_node_tree_exited", [pge_node])
-	pge_node.connect("drag_started", self, "_on_pge_node_drag_started", [pge_node])
-	pge_node.connect("dragged", self, "_on_pge_node_dragged", [pge_node])
-	pge_node.connect("drag_ended", self, "_on_pge_node_drag_ended", [pge_node])
 	pge_node.slot.edges_parent_path = edges.get_path()
+
+	var position: = intended_position
+	if position.x < 0:
+		position.x = 0
+	if position.y < 0:
+		position.y = 0
 
 	if position:
 		pge_node.move_to(position)
@@ -300,6 +306,7 @@ func save_graph(file_path: String) -> void:
 
 func load_graph(file_path: String) -> void:
 	var resource: = load(file_path)
+
 	if not resource:
 		$Messages.show_message("Failed on loading resource from path %s." % file_path)
 		return

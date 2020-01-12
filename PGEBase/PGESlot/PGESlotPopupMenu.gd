@@ -4,6 +4,7 @@ var delete_icon: Texture = preload("../assets/icons/icon_delete.svg")
 
 onready var slot = get_parent()
 
+
 func _ready():
 	connect("about_to_show", self, "_on_about_to_show")
 	connect("index_pressed", self, "_on_index_pressed")
