@@ -1,4 +1,4 @@
-extends Panel
+extends Control
 
 export var selection_color = Color(1, 1, 1)
 
@@ -6,12 +6,14 @@ var selection_rect: = Rect2(Vector2(), Vector2())
 
 var _selecting: = false
 
+onready var panel: = get_parent()
+
 
 func _ready() -> void:
-	connect("gui_input", self, "_on_gui_input")
+	panel.connect("gui_input", self, "_on_Panel_gui_input")
 
 
-func _on_gui_input(event: InputEvent) -> void:
+func _on_Panel_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if _selecting:
 			selection_rect.end = event.position

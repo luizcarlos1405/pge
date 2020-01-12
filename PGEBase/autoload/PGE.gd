@@ -157,6 +157,9 @@ func undoredo_node_toggle_collapse(pge_node, collapsed: int) -> void:
 
 
 func undoredo_delete_node(pge_node) -> void:
+	if not pge_node.can_be_deleted:
+		return
+
 	var parent: Node = pge_node.get_parent()
 
 	undoredo.create_action("Delete Node")
@@ -223,6 +226,9 @@ func undoredo_block_set_data(pge_block, old_data: Dictionary, new_data: Dictiona
 
 
 func undoredo_delete_block(pge_block) -> void:
+	if not pge_block.can_be_deleted:
+		return
+
 	var parent: Node = pge_block.get_parent()
 	undoredo.create_action("Delete Block")
 	undoredo.add_undo_reference(pge_block)
