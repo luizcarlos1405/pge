@@ -93,7 +93,7 @@ func _on_FileDialog_file_selected(file_path: String) -> void:
 
 
 func _on_FileDialog_visibility_changed() -> void:
-
+	$FileDialog.current_dir = $FileDialog.current_dir
 	pass
 
 
@@ -270,13 +270,13 @@ func _open_graph_from_node_dfs(graph: PGEGraph, node_data: Dictionary) -> Node:
 		# Get or create it's blocks
 		for block_data in node_data.blocks:
 			var block_filename: String = block_data.editor_data.filename
-			var pge_block = pge_node.blocks.get_node_or_null(block_data.editor_data.name)
+			var pge_block = pge_node.blocks.get_node_or_null(block_data.editor_data.get("name", "*"))
 
 			if not pge_block:
 				pge_block = pge_node.add_block(block_filename)
 
 			pge_block.set_editor_data(block_data.editor_data)
-			pge_block.set_data(block_data.data)
+			pge_block.set_data(block_data.get("data", {}))
 
 			for i in range(block_data.connections.size()):
 				var connection: String = block_data.connections[i]

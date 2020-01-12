@@ -38,6 +38,10 @@ func _on_pge_block_tree_exited(pge_block) -> void:
 		var packed_scene: PackedScene = popup.get_item_metadata(i)
 
 		if packed_scene == load(pge_block.filename):
+			if not _block_count.has(pge_block.filename):
+				push_error("Trying to decrease untracked block_count of %s" % pge_block.filename)
+				return
+
 			_block_count[pge_block.filename] -= 1
 			popup.set_item_disabled(i, false)
 
