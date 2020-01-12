@@ -6,13 +6,6 @@ extends Control
 
 signal graph_loaded
 
-onready var scroll_container = $ScrollContainer
-onready var panel = $ScrollContainer/Panel
-onready var graph_name = $Header/Items/GraphName
-onready var nodes = $ScrollContainer/Panel/Nodes
-onready var edges = $ScrollContainer/Panel/Edges
-onready var _scroll_container_initial_size = scroll_container.rect_size
-
 export(GDScript) var graph_class: GDScript
 export(PackedScene) var pge_node_packed_scene = preload("../PGENode/PGENode.tscn")
 
@@ -20,6 +13,7 @@ const SAVE_KEY = KEY_S
 const LOAD_KEY = KEY_L
 const EXPORT_KEY = KEY_E
 const ADD_NODE_KEY = KEY_A
+const NEW_GRAPH_NAME: = "Untitled"
 
 var panel_margin: = 500
 
@@ -28,14 +22,23 @@ var _popup_titles = {
 	"load": tr("Load Graph"),
 	"export": tr("Export Graph")
 }
+
 var _zoom_step: = 0.1
 var _zoom_min: = 0.2
 var _zoom_max: = 5.0
 
+onready var scroll_container = $ScrollContainer
+onready var panel = $ScrollContainer/Panel
+onready var graph_name = $Header/Items/GraphName
+onready var nodes = $ScrollContainer/Panel/Nodes
+onready var edges = $ScrollContainer/Panel/Edges
+onready var _scroll_container_initial_size = scroll_container.rect_size
 onready var _graph: PGEGraph = graph_class.new()
 
 
 func _ready():
+	graph_name.text = NEW_GRAPH_NAME
+
 	panel.rect_min_size.x = OS.window_size.x
 	panel.rect_min_size.y = OS.window_size.y - $Header.rect_size.y
 	refresh_panel_size()
@@ -210,6 +213,9 @@ func _input(event: InputEvent) -> void:
 
 
 func clear() -> void:
+	graph_name.text = NEW_GRAPH_NAME
+	for edge in edges.get_children():
+		edge.queue_free()
 	for node in nodes.get_children():
 		node.queue_free()
 

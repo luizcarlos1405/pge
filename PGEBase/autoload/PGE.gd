@@ -105,9 +105,7 @@ func undoredo_move_block(pge_block, from_index: int, to_index: int) -> void:
 func undoredo_resize_block(pge_block, old_rect_min_size: Vector2, new_rect_min_size: Vector2) -> void:
 	undoredo.create_action("Resize Block")
 	undoredo.add_do_property(pge_block, "rect_min_size", new_rect_min_size)
-#	undoredo.add_do_property(pge_block, "rect_size", new_rect_min_size)
 	undoredo.add_undo_property(pge_block, "rect_min_size", old_rect_min_size)
-#	undoredo.add_undo_property(pge_block, "rect_size", new_rect_min_size)
 	undoredo.commit_action()
 
 
@@ -117,6 +115,13 @@ func undoredo_block_set_slot_side(pge_block, slot_side: int) -> void:
 	undoredo.create_action("Set Slot Side")
 	undoredo.add_do_method(pge_block, "set_slot_side", slot_side)
 	undoredo.add_undo_method(pge_block, "set_slot_side", old_slot_side)
+	undoredo.commit_action()
+
+
+func undoredo_block_set_data(pge_block, old_data: Dictionary, new_data: Dictionary) -> void:
+	undoredo.create_action("Block Set Data")
+	undoredo.add_do_method(pge_block, "set_data", new_data)
+	undoredo.add_undo_method(pge_block, "set_data", old_data)
 	undoredo.commit_action()
 
 
