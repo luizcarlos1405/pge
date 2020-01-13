@@ -43,6 +43,7 @@ func _init() -> void:
 func _ready() -> void:
 	if not Engine.editor_hint:
 		slot.controller = self
+		set_slot_side(slot_side)
 		connect("gui_input", self, "_on_gui_input")
 
 		$PopupMenu.connect("index_pressed", self, "_on_PopupMenu_index_pressed")
@@ -428,6 +429,7 @@ func set_slot_side(value: int) -> void:
 			collapsed_slot.tangent_x_direction = 1
 
 			slot.texture_normal = slot.texture_right
+			collapsed_slot.texture_normal = collapsed_slot.texture_left
 
 		elif slot_side == SlotSide.RIGHT:
 			menu.move_child(slot, 2)
@@ -440,6 +442,7 @@ func set_slot_side(value: int) -> void:
 			collapsed_slot.tangent_x_direction = -1
 
 			slot.texture_normal = slot.texture_left
+			collapsed_slot.texture_normal = collapsed_slot.texture_right
 
 
 func set_can_be_deleted(value: bool) -> void:

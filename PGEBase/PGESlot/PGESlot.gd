@@ -19,9 +19,10 @@ enum TangentDirection {LEFT = -1, NONE = 0, RIGHT = 1}
 export(Mode) var mode = Mode.BOTH
 export(TangentDirection) var tangent_x_direction: = TangentDirection.NONE setget set_tangent_x_direction
 export var max_connections: = 1
-export var normal_modulate: = Color(1,1,1) setget set_normal_modulate
-export var hover_modulate: = Color(1, 1, 1) setget set_hover_modulate
-export var pressed_modulate: = Color(1, 1, 1) setget set_pressed_modulate
+export var normal_modulate: = Color(1,1,1)
+export var hover_modulate: = Color(1, 1, 1)
+export var pressed_modulate: = Color(1, 1, 1)
+export var disabled_modulate: = Color(1 ,1, 1)
 export var texture_right: Texture
 export var texture_left: Texture
 export var texture_both: Texture
@@ -34,7 +35,10 @@ var edges: = []
 
 
 func _ready() -> void:
-	self_modulate = normal_modulate
+	if not disabled:
+		self_modulate = normal_modulate
+	else:
+		self_modulate = disabled_modulate
 
 	if mode == Mode.BOTH:
 		texture_normal = texture_both

@@ -1,9 +1,9 @@
 [gd_scene load_steps=7 format=2]
 
-[ext_resource path="res://PGEBase/assets/icons/node_io_right.svg" type="Texture" id=1]
+[ext_resource path="res://PGEBase/assets/icons/node_io_both.svg" type="Texture" id=1]
 [ext_resource path="res://PGEBase/PGESlot/PGESlot.gd" type="Script" id=2]
-[ext_resource path="res://PGEBase/assets/icons/node_io_left.svg" type="Texture" id=3]
-[ext_resource path="res://PGEBase/assets/icons/node_io_both.svg" type="Texture" id=4]
+[ext_resource path="res://PGEBase/assets/icons/node_io_right.svg" type="Texture" id=3]
+[ext_resource path="res://PGEBase/assets/icons/node_io_left.svg" type="Texture" id=4]
 [ext_resource path="res://PGEBase/GodotAlienTheme.tres" type="Theme" id=5]
 [ext_resource path="res://PGEBase/PGESlot/PGESlotPopupMenu.gd" type="Script" id=6]
 
@@ -27,9 +27,9 @@ stretch_mode = 4
 script = ExtResource( 2 )
 hover_modulate = Color( 0.105882, 1, 0.607843, 1 )
 pressed_modulate = Color( 0.0236206, 0.335938, 0.198956, 1 )
-texture_right = ExtResource( 1 )
-texture_left = ExtResource( 3 )
-texture_both = ExtResource( 4 )
+texture_right = ExtResource( 3 )
+texture_left = ExtResource( 4 )
+texture_both = ExtResource( 1 )
 
 [node name="PopupMenu" type="PopupMenu" parent="."]
 margin_right = 20.0

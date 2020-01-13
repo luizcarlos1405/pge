@@ -8,6 +8,7 @@ signal graph_loaded
 
 export(GDScript) var graph_class: GDScript
 export(PackedScene) var pge_node_packed_scene = preload("../PGENode/PGENode.tscn")
+export var scroll_sensibility: = 5.0
 
 const SAVE_KEY = KEY_S
 const LOAD_KEY = KEY_L
@@ -78,11 +79,33 @@ func _on_Panel_gui_input(event: InputEvent) -> void:
 
 					PGE.deselect_all()
 
+		# Mouse wheel is not detected by Shortcut class, so it's implemented here
+		elif event.button_index == BUTTON_WHEEL_UP:
+			if Input.is_key_pressed(KEY_CONTROL):
+				_on_ZoomIn_pressed()
+
+			elif Input.is_key_pressed(KEY_SHIFT):
+				scroll_container.scroll_horizontal -= scroll_sensibility
+
+			else:
+				scroll_container.scroll_vertical -= scroll_sensibility
+
+		elif event.button_index == BUTTON_WHEEL_DOWN:
+			if Input.is_key_pressed(KEY_CONTROL):
+				_on_ZoomOut_pressed()
+
+			elif Input.is_key_pressed(KEY_SHIFT):
+				scroll_container.scroll_horizontal += scroll_sensibility
+
+			else:
+				scroll_container.scroll_vertical += scroll_sensibility
+
 		elif event.button_index == BUTTON_MIDDLE:
 			if event.pressed:
 				panel.mouse_default_cursor_shape = Control.CURSOR_DRAG
 			else:
 				panel.mouse_default_cursor_shape = Control.CURSOR_ARROW
+
 
 
 func _on_FileDialog_file_selected(file_path: String) -> void:
@@ -189,30 +212,6 @@ func _on_PGE_selection_dragged(selection_rect: Rect2) -> void:
 
 func _on_PGE_selection_moved() -> void:
 	refresh_panel_size()
-
-
-# BUTTON_WHEEL events doesn't work with button shortcuts, so zoom shortcut is implemented here
-func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		if event.button_index == BUTTON_WHEEL_UP:
-			if Input.is_key_pressed(KEY_CONTROL):
-				_on_ZoomIn_pressed()
-
-			elif Input.is_key_pressed(KEY_SHIFT):
-				scroll_container.scroll_horizontal -= 3
-
-			else:
-				scroll_container.scroll_vertical -= 3
-
-		elif event.button_index == BUTTON_WHEEL_DOWN:
-			if Input.is_key_pressed(KEY_CONTROL):
-				_on_ZoomOut_pressed()
-
-			elif Input.is_key_pressed(KEY_SHIFT):
-				scroll_container.scroll_horizontal += 3
-
-			else:
-				scroll_container.scroll_vertical += 3
 
 
 func clear() -> void:
