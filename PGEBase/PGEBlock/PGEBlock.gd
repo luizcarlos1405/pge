@@ -165,6 +165,7 @@ func set_slot_side(value: int) -> void:
 				yield(get_tree(), "idle_frame")
 				yield(get_tree(), "idle_frame")
 				slot.tangent_x_direction = -1
+				slot.texture_normal = slot.texture_left
 
 		elif slot_side == SlotSide.RIGHT:
 			$Parts.move_child(slots, 1)
@@ -172,6 +173,7 @@ func set_slot_side(value: int) -> void:
 				yield(get_tree(), "idle_frame")
 				yield(get_tree(), "idle_frame")
 				slot.tangent_x_direction = 1
+				slot.texture_normal = slot.texture_right
 
 
 func set_slots_controller(object: Object) -> void:
@@ -195,17 +197,14 @@ func set_slots_number(value: int) -> void:
 				# The slots owners are not set because of scene inheritance problems
 				# So they don't appear in the scene tree of the editor
 				slots.add_child(new_slot)
-				if slot_side == SlotSide.LEFT:
-					new_slot.tangent_x_direction = new_slot.TangentDirection.LEFT
-				elif slot_side == SlotSide.RIGHT:
-					new_slot.tangent_x_direction = new_slot.TangentDirection.RIGHT
-
 
 		elif difference < 0:
 			var children: Array = slots.get_children()
 			for i in range(abs(difference)):
 				var child = children.pop_back()
 				child.queue_free()
+
+		set_slot_side(slot_side)
 
 
 func set_slots_colors(value: PoolColorArray) -> void:
@@ -214,7 +213,7 @@ func set_slots_colors(value: PoolColorArray) -> void:
 	if slots:
 		var slots_to_color: int = min(slots.get_child_count(), slots_colors.size()) as int
 		for i in range(slots_to_color):
-			slots.get_child(i).color = slots_colors[i]
+			slots.get_child(i).normal_modulate = slots_colors[i]
 
 
 func set_selected(value: bool) -> void:

@@ -1,5 +1,5 @@
 tool
-extends Button
+extends TextureButton
 
 """
 	Identifies the connection intent and creates an PGEEdge if succesfully
@@ -19,7 +19,12 @@ enum TangentDirection {LEFT = -1, NONE = 0, RIGHT = 1}
 export(Mode) var mode = Mode.BOTH
 export(TangentDirection) var tangent_x_direction: = TangentDirection.NONE setget set_tangent_x_direction
 export var max_connections: = 1
-export var color: = Color(1,1,1) setget set_color
+export var normal_modulate: = Color(1,1,1) setget set_normal_modulate
+export var hover_modulate: = Color(1, 1, 1) setget set_hover_modulate
+export var pressed_modulate: = Color(1, 1, 1) setget set_pressed_modulate
+export var texture_right: Texture
+export var texture_left: Texture
+export var texture_both: Texture
 
 var controller: Node = null # Aways a PGENode
 var edges_parent_path: = NodePath("")
@@ -29,18 +34,41 @@ var edges: = []
 
 
 func _ready() -> void:
+	self_modulate = normal_modulate
+
+	if mode == Mode.BOTH:
+		texture_normal = texture_both
+
 	connect("gui_input", self, "_on_gui_input")
+	connect("mouse_entered", self, "_on_mouse_entered")
+	connect("mouse_exited", self, "_on_mouse_exited")
 
 
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		get_tree().set_input_as_handled()
 
-		if event.button_index == BUTTON_RIGHT and event.pressed:
-			$PopupMenu.clear()
+		if event.button_index == BUTTON_LEFT:
+			if event.pressed:
+				self_modulate = pressed_modulate
+			else:
+				if self_modulate == pressed_modulate:
+					self_modulate = hover_modulate
 
-			if not edges.empty():
-				$PopupMenu.popup(Rect2(event.global_position, popup_menu_rect_min_size))
+		elif event.button_index == BUTTON_RIGHT:
+			if event.pressed:
+				$PopupMenu.clear()
+
+				if not edges.empty():
+					$PopupMenu.popup(Rect2(event.global_position, popup_menu_rect_min_size))
+
+
+func _on_mouse_entered() -> void:
+	self_modulate = hover_modulate
+
+
+func _on_mouse_exited() -> void:
+	self_modulate = normal_modulate
 
 
 func _on_edge_tree_exiting(edge) -> void:
@@ -117,6 +145,9 @@ func can_drop_data(position: Vector2, edge: PGEEdge) -> bool:
 	if edge.connecting_slot == self or not edge:
 		return false
 
+	if max_connections and edges.size() >= max_connections:
+		return false
+
 	if edge.connecting_slot.mode == Mode.BOTH or mode == Mode.BOTH:
 		return true
 
@@ -148,9 +179,16 @@ func set_tangent_x_direction(value: int) -> void:
 	refresh_edges()
 
 
-func set_color(value: Color) -> void:
-	color = value
-	self_modulate = color
+func set_normal_modulate(value: Color) -> void:
+	normal_modulate = value
+
+
+func set_hover_modulate(value: Color) -> void:
+	hover_modulate = value
+
+
+func set_pressed_modulate(value: Color) -> void:
+	pressed_modulate = value
 
 
 func set_radius(value: float) -> void:

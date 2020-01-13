@@ -427,6 +427,8 @@ func set_slot_side(value: int) -> void:
 			slot.tangent_x_direction = -1
 			collapsed_slot.tangent_x_direction = 1
 
+			slot.texture_normal = slot.texture_right
+
 		elif slot_side == SlotSide.RIGHT:
 			menu.move_child(slot, 2)
 			menu.move_child(collapsed_slot, 0)
@@ -436,6 +438,8 @@ func set_slot_side(value: int) -> void:
 
 			slot.tangent_x_direction = 1
 			collapsed_slot.tangent_x_direction = -1
+
+			slot.texture_normal = slot.texture_left
 
 
 func set_can_be_deleted(value: bool) -> void:

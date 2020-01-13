@@ -57,6 +57,20 @@ func _input(event: InputEvent) -> void:
 			points = _curve.get_baked_points()
 
 
+#func _draw() -> void:
+#	if points.size() >= 4:
+#		var point_count: = points.size()
+#		var dir: = (points[point_count - 4] - points[point_count - 1]).normalized()
+#		var tip: = points[point_count - 4]
+#		var base_left: = tip + dir.rotated(PI / 10) * 20
+#		var base_right: = tip + dir.rotated(-PI / 10) * 20
+#		draw_polygon(PoolVector2Array([tip, base_left, base_right]), [gradient.get_color(1), gradient.get_color(1), gradient.get_color(1)] )
+#		draw_line(tip, base_left, gradient.get_color(1), width)
+#		draw_line(tip, base_right, gradient.get_color(1), width)
+#		draw_line(base_left, base_right, gradient.get_color(1), width)
+#	pass
+
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END:
 		if not (to_slot and from_slot):
@@ -65,7 +79,7 @@ func _notification(what: int) -> void:
 
 func start_connecting(start_slot) -> void:
 	connecting_slot = start_slot
-	gradient.set_color(0, connecting_slot.color)
+	gradient.set_color(0, connecting_slot.normal_modulate)
 
 
 func connect_slots(start_slot, end_slot) -> void:
@@ -104,13 +118,15 @@ func refresh() -> void:
 
 	points = _curve.get_baked_points()
 
+	update()
+
 
 func set_from_slot(value) -> void:
 	from_slot = value
 
 	from_slot.connect("item_rect_changed", self, "_on_Slot_rect_changed")
 
-	gradient.set_color(0, from_slot.color)
+	gradient.set_color(0, from_slot.normal_modulate)
 
 
 func set_to_slot(value) -> void:
@@ -118,7 +134,7 @@ func set_to_slot(value) -> void:
 
 	to_slot.connect("item_rect_changed", self, "_on_Slot_rect_changed")
 
-	gradient.set_color(1, to_slot.color)
+	gradient.set_color(1, to_slot.normal_modulate)
 
 
 func get_bezier_tangents(

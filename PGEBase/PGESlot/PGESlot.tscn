@@ -1,15 +1,13 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=7 format=2]
 
-[ext_resource path="res://PGEBase/PGESlot/SlotHover.tres" type="StyleBox" id=1]
-[ext_resource path="res://PGEBase/PGESlot/SlotPressed.tres" type="StyleBox" id=2]
-[ext_resource path="res://PGEBase/PGESlot/SlotFocus.tres" type="StyleBox" id=3]
-[ext_resource path="res://PGEBase/PGESlot/SlotDisabled.tres" type="StyleBox" id=4]
-[ext_resource path="res://PGEBase/PGESlot/SlotNormal.tres" type="StyleBox" id=5]
-[ext_resource path="res://PGEBase/PGESlot/PGESlot.gd" type="Script" id=6]
-[ext_resource path="res://PGEBase/GodotAlienTheme.tres" type="Theme" id=7]
-[ext_resource path="res://PGEBase/PGESlot/PGESlotPopupMenu.gd" type="Script" id=8]
+[ext_resource path="res://PGEBase/assets/icons/node_io_right.svg" type="Texture" id=1]
+[ext_resource path="res://PGEBase/PGESlot/PGESlot.gd" type="Script" id=2]
+[ext_resource path="res://PGEBase/assets/icons/node_io_left.svg" type="Texture" id=3]
+[ext_resource path="res://PGEBase/assets/icons/node_io_both.svg" type="Texture" id=4]
+[ext_resource path="res://PGEBase/GodotAlienTheme.tres" type="Theme" id=5]
+[ext_resource path="res://PGEBase/PGESlot/PGESlotPopupMenu.gd" type="Script" id=6]
 
-[node name="PGESlot" type="Button"]
+[node name="PGESlot" type="TextureButton"]
 margin_right = 14.0
 margin_bottom = 14.0
 grow_horizontal = 2
@@ -21,19 +19,20 @@ mouse_filter = 1
 mouse_default_cursor_shape = 2
 size_flags_horizontal = 4
 size_flags_vertical = 6
-custom_styles/hover = ExtResource( 1 )
-custom_styles/pressed = ExtResource( 2 )
-custom_styles/focus = ExtResource( 3 )
-custom_styles/disabled = ExtResource( 4 )
-custom_styles/normal = ExtResource( 5 )
-custom_constants/hseparation = 0
 action_mode = 0
 enabled_focus_mode = 0
-clip_text = true
-script = ExtResource( 6 )
+texture_normal = ExtResource( 1 )
+expand = true
+stretch_mode = 4
+script = ExtResource( 2 )
+hover_modulate = Color( 0.105882, 1, 0.607843, 1 )
+pressed_modulate = Color( 0.0236206, 0.335938, 0.198956, 1 )
+texture_right = ExtResource( 1 )
+texture_left = ExtResource( 3 )
+texture_both = ExtResource( 4 )
 
 [node name="PopupMenu" type="PopupMenu" parent="."]
 margin_right = 20.0
 margin_bottom = 20.0
-theme = ExtResource( 7 )
-script = ExtResource( 8 )
+theme = ExtResource( 5 )
+script = ExtResource( 6 )
