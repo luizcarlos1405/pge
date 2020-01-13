@@ -262,6 +262,7 @@ func open_graph(graph: PGEGraph) -> void:
 	yield(get_tree(), "idle_frame")
 	yield(get_tree(), "idle_frame")
 	refresh_edges()
+	refresh_panel_size()
 
 
 func _open_graph_from_node_dfs(graph: PGEGraph, node_data: Dictionary) -> Node:
@@ -318,7 +319,7 @@ func load_graph(file_path: String) -> void:
 	graph_name.text = file_path.get_file().trim_suffix(".tres")
 	_graph = resource
 
-	open_graph(_graph) # TODO: opening the graph doesn't has to register everything under UndoRedo
+	open_graph(_graph)
 	emit_signal("graph_loaded")
 
 
