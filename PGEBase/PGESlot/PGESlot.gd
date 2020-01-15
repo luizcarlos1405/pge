@@ -75,11 +75,6 @@ func _on_mouse_exited() -> void:
 	self_modulate = normal_modulate
 
 
-func _on_edge_tree_exiting(edge) -> void:
-#	edges.erase(edge)
-	pass
-
-
 func start_connecting() -> PGEEdge:
 	var parent = get_node_or_null(edges_parent_path)
 	var edge: = PGEEdge.new()
@@ -101,10 +96,7 @@ func receive_connection(edge: PGEEdge):
 		edge.connect_slots(edge.connecting_slot, self)
 
 	edge.from_slot.edges.append(edge)
-	edge.connect("tree_exiting", edge.from_slot, "_on_edge_tree_exiting", [edge])
-
 	edge.to_slot.edges.append(edge)
-	edge.connect("tree_exiting", edge.to_slot, "_on_edge_tree_exiting", [edge])
 
 
 # An edge can be pre-created calling start_connecting before connect_to

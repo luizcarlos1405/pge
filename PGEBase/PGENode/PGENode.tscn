@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://PGEBase/PGENode/PGENodePanelNormal.tres" type="StyleBox" id=1]
 [ext_resource path="res://PGEBase/PGENode/PGENode.gd" type="Script" id=2]
@@ -7,7 +7,9 @@
 [ext_resource path="res://PGEBase/assets/icons/icon_GUI_tree_arrow_right.svg" type="Texture" id=5]
 [ext_resource path="res://PGEBase/assets/icons/icon_close.svg" type="Texture" id=6]
 [ext_resource path="res://PGEBase/PGESlot/PGESlot.tscn" type="PackedScene" id=7]
-[ext_resource path="res://PGEBase/PGENode/AddBlockButton.gd" type="Script" id=8]
+[ext_resource path="res://PGEBase/assets/icons/node_io_right.svg" type="Texture" id=8]
+[ext_resource path="res://PGEBase/PGENode/AddBlockButton.gd" type="Script" id=9]
+[ext_resource path="res://PGEBase/assets/icons/node_io_left.svg" type="Texture" id=10]
 
 [sub_resource type="StyleBoxEmpty" id=1]
 
@@ -81,6 +83,7 @@ margin_top = 4.0
 margin_bottom = 18.0
 size_flags_horizontal = 2
 size_flags_stretch_ratio = 0.0
+texture_normal = ExtResource( 8 )
 mode = 1
 tangent_x_direction = -1
 max_connections = 0
@@ -93,7 +96,7 @@ mouse_filter = 1
 size_flags_horizontal = 3
 theme = ExtResource( 3 )
 text = "Add Block"
-script = ExtResource( 8 )
+script = ExtResource( 9 )
 
 [node name="CollapsedSlot" parent="Parts/Menu" instance=ExtResource( 7 )]
 visible = false
@@ -102,6 +105,8 @@ margin_top = 4.0
 margin_right = 117.0
 margin_bottom = 18.0
 size_flags_horizontal = 10
+texture_normal = ExtResource( 10 )
+tangent_x_direction = 1
 
 [node name="Blocks" type="VBoxContainer" parent="Parts"]
 margin_top = 46.0

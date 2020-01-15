@@ -8,7 +8,7 @@ const SELECTED_GROUP_NAME: = "selected"
 
 var undoredo: = UndoRedo.new()
 
-
+# SELECTION
 func select(node: Node) -> void:
 	node.add_to_group(SELECTED_GROUP_NAME)
 	node.set_selected(true)
@@ -76,6 +76,7 @@ func move_selection(intended_ammount: Vector2) -> void:
 
 		emit_signal("selection_dragged", selection_rect)
 
+# UNDOREDO
 func undoredo_move_selection(ammount: Vector2) -> void:
 	undoredo.create_action("Move Selection")
 	for node in get_tree().get_nodes_in_group(SELECTED_GROUP_NAME):
@@ -173,7 +174,7 @@ func undoredo_delete_node(pge_node) -> void:
 	for block in pge_node.blocks.get_children():
 		for slot in block.slots.get_children():
 			for edge in slot.edges:
-				if edge.is_inside_tree():
+				if edge.is_inside_tree() and not edge.to_slot == pge_node.slot:
 					undoredo.add_undo_reference(edge)
 					undoredo.add_do_method(edge.get_parent(), "remove_child", edge)
 					undoredo.add_undo_method(edge.get_parent(), "add_child", edge)

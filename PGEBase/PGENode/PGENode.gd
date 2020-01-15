@@ -41,9 +41,10 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	set_slot_side(slot_side)
+
 	if not Engine.editor_hint:
 		slot.controller = self
-		set_slot_side(slot_side)
 		connect("gui_input", self, "_on_gui_input")
 
 		$PopupMenu.connect("index_pressed", self, "_on_PopupMenu_index_pressed")
@@ -406,6 +407,7 @@ func set_editor_data(editor_data: Dictionary) -> void:
 
 func set_selected(value: bool) -> void:
 	selected = value
+
 	if selected:
 		raise()
 		add_stylebox_override("panel", stylebox_selected)

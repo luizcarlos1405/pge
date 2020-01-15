@@ -142,6 +142,7 @@ mouse_filter = 2
 custom_styles/panel = SubResource( 1 )
 
 [node name="Items" type="HBoxContainer" parent="Header"]
+editor/display_folded = true
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5

@@ -45,6 +45,7 @@ func _init() -> void:
 func _ready() -> void:
 	set_slots_number(slots_number)
 	set_slots_colors(slots_colors)
+	set_slot_side(slot_side)
 
 	if not Engine.editor_hint:
 		$PopupMenu.set_item_disabled(1, not can_be_deleted)
@@ -203,8 +204,6 @@ func set_slots_number(value: int) -> void:
 			for i in range(abs(difference)):
 				var child = children.pop_back()
 				child.queue_free()
-
-		set_slot_side(slot_side)
 
 
 func set_slots_colors(value: PoolColorArray) -> void:

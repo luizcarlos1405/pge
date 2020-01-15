@@ -107,7 +107,6 @@ func _on_Panel_gui_input(event: InputEvent) -> void:
 				panel.mouse_default_cursor_shape = Control.CURSOR_ARROW
 
 
-
 func _on_FileDialog_file_selected(file_path: String) -> void:
 	match $FileDialog.get_meta("operation"):
 		"save":

@@ -19,8 +19,11 @@ var _curve: = Curve2D.new()
 
 
 func _ready() -> void:
+	texture = preload("res://PGEBase/assets/icons/connection_line.svg")
+	texture_mode = Line2D.LINE_TEXTURE_STRETCH
+	joint_mode = Line2D.LINE_JOINT_ROUND
 	default_color = Color(1, 1, 1, 0.5)
-	width = 2
+	width = 5
 	begin_cap_mode = Line2D.LINE_CAP_ROUND
 	end_cap_mode = Line2D.LINE_CAP_ROUND
 	gradient = Gradient.new()
@@ -44,31 +47,36 @@ func _on_Slot_rect_changed() -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if connecting_slot:
+			var from_position: Vector2
+			var to_position: Vector2
 			var tangents: Dictionary
 
-			_curve.set_point_position(0, to_local(connecting_slot.get_global_position()) + connecting_slot.get_size() / 2.0)
-			_curve.set_point_position(1, to_local(event.global_position))
-			tangents = get_bezier_tangents(_curve.get_point_position(0),
-					_curve.get_point_position(1), connecting_slot.tangent_x_direction, 0)
+			if connecting_slot.mode == connecting_slot.Mode.IN:
+				from_position = to_local(event.global_position)
+				to_position = to_local(connecting_slot.get_global_position()) + connecting_slot.get_size() / 2.0
+				tangents = get_bezier_tangents(
+					_curve.get_point_position(0),
+					_curve.get_point_position(1),
+					0,
+					connecting_slot.tangent_x_direction
+				)
+			else:
+				from_position = to_local(connecting_slot.get_global_position()) + connecting_slot.get_size() / 2.0
+				to_position = to_local(event.global_position)
+				tangents = get_bezier_tangents(
+					_curve.get_point_position(0),
+					_curve.get_point_position(1),
+					connecting_slot.tangent_x_direction,
+					0
+				)
+
+			_curve.set_point_position(0, from_position)
+			_curve.set_point_position(1, to_position)
 
 			_curve.set_point_out(0, tangents.from_out)
 			_curve.set_point_in(1, tangents.to_in)
 
 			points = _curve.get_baked_points()
-
-
-#func _draw() -> void:
-#	if points.size() >= 4:
-#		var point_count: = points.size()
-#		var dir: = (points[point_count - 4] - points[point_count - 1]).normalized()
-#		var tip: = points[point_count - 4]
-#		var base_left: = tip + dir.rotated(PI / 10) * 20
-#		var base_right: = tip + dir.rotated(-PI / 10) * 20
-#		draw_polygon(PoolVector2Array([tip, base_left, base_right]), [gradient.get_color(1), gradient.get_color(1), gradient.get_color(1)] )
-#		draw_line(tip, base_left, gradient.get_color(1), width)
-#		draw_line(tip, base_right, gradient.get_color(1), width)
-#		draw_line(base_left, base_right, gradient.get_color(1), width)
-#	pass
 
 
 func _notification(what: int) -> void:

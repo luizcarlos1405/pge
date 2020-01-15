@@ -48,7 +48,7 @@ enabled=PoolStringArray( "todo" )
 
 [locale]
 
-translations=PoolStringArray( "res://locale/pt_BR.po" )
+translations=PoolStringArray(  )
 
 [rendering]
 

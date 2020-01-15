@@ -2,129 +2,89 @@
 
 # What is this?
 
-I had this idea for a generic graph editor that could be used to easily create any tool to edit graph-based information. This is the implementation of that idea.
+I had this idea for a generic graph editor that could be used to easily create any tool to edit graph-based information. This is the implementation of said idea.
 
 # How does it work?
 
-It has three main components: the **Graph**, that contain **Nodes**, that contain **Blocks**.
+It has three main components: the `PGEGraph`s, that contain `PGENode`s, that contain `PGEBlock`s. In order to make a tool based on this implementation you'll need only what's in the *PGEBase* folder and autoload what is in the *autoload* folder.
 
-## Block
+## PGEBlock
 
-A block can represent any information you want. Be it a formulary, a label, a button, a transition etc. It also represent the connection with a Node.
+A PGEBlock can represent any information you want. Be it a formulary, a label, a button, a transition etc. It can also have slots to connect it to a node.
 
-## Node
+## PGENode
 
-A node is just a container for blocks.
+A PGENode is just a container for blocks. It receives the connections.
 
-## Graph
+## PGEGraph
 
 Just as you would expect, it contain all the Nodes and their data.
 
 # Can you elaborate?
 
-Yes, of course. Next, a Top-down description of the implementation. But before that, I must clarify something. A graph has nodes and so does Godot. So, in order to avoid ambiguities, this document call a graph node *node* and a Godot node *Godot node*. Got it? A node is in the graph while a Godot node is in the Godot's Scene Tree. All right, let's go.
+Yes, of course. Next, a top-down description of the implementation.
 
-## GraphEditor.tscn
+## PGEEditor.tscn
 
-It is the visual editor for a *Graph.gd* resource. It's a generic editor to be inherited so you make a more specific editor e. g. a dialogue tree editor or a state machine editor.
+It is the visual editor for a *PGEGraph.gd* resource. It's a generic editor to be inherited so you make a more specific editor e. g. a dialogue tree editor or a state machine editor.
 
 ![](readme_assets/graph_editor.png)
 
 In order to do that, you can inherit it and change the exported variables from the Godot's editor inspector:
 
+- **Graph Class:** a file with the PGEGraph.gd script or a script that inherits it. This is the resource that the editor will, well, edit.
 - **Pge Node Packed Scene:** the editor create nodes in it, but if you're doing your custom editor, you might want to have a custom node. Here you set the GraphNode.tscn scene or a scene that inherits it.
-- **Item Types:** a dictionary containing keys that represent an item type and values that represent the path to the GraphNodeItem.tscn scene or a scene that inherits from it.
+- **Scroll Sensibility:** the sensibility for scrolling the panel
 
-You can inherit the GraphEditor's script and define *get_graph_data() → Dictionary* and *set_graph_data(data: Dictionary)* to be able to save custom data in the resource it will edit. This way this data will be saved along with the edited graph.
+## PGENode.tscn
 
-## GraphNode.tscn
+It is only a container and has a MenuButton to choose blocks to be added to it. You have to inherit the scene and it's root script in order to add custom `PGEBLock` options. For that use the method `set_block_options(blocks_data: Array)`. It expects an array with the `PGEBlock`s information with the following format:
 
-It is only a container and has a MenuButton to choose items to be added to it. You can inherit and edit it's name and/or script.
+```GDScript
+{
+   text: String, # The text to be exhibited on MenuButton option
+   scene_path: String # The block's res://path/to/pge_block.tsnc
+}
+```
 
-## GraphNodeItem.tscn
+## PGEBlock.tscn
 
-If you are making an custom editor, inherit this scene to make as much items as you want. The simplest way to do it is putting new Godot node's as child of the Content Godot node and adding the new scene and it's type into the Graph Editor's Item Types. Also, you'll have to inherit the script and define get_item_data() and set_item_data(data) so your custom data will be on the graph resource when saved.
+If you are making a custom editor, inherit this scene to make as much `PGEBlock`s as you want. The simplest way to do it is putting new nodes as child of the `Content` node. Also, you'll have to inherit the script and overwrite `get_data() -> Dictionary` and `set_data(data: Dictionary)`. This way your custom data will be on the graph resource when saved.
 
-## Graph.gd
+You can define the variable `type` in the editor for optional categorization. This category will be used by PGEGraph to get the `PGEBlock`s of a `PGENode` by type. You can also set the number of slots it will have to connect to other `PGENode`s and some other options.
 
-It inherits from Resource and has two variables: connections and data. **Connections** is a Dictionary and it's content has the following format:
+## PGEGraph.gd
 
-    {
-    	'GraphStart' : {
-    		'editor_data' :{
-    			*rect_position*
-    		},
-    		'start_node_name' : *sarting node name*,
-    	},
-    	*node_name* : {
-    		'editor_data' : {
-    			*data the editor needs to load and edit the node*
-    		},
-    		'items' : [
-    			{
-    				'type' : *item type,*
-    				'editor_data' : {
-    					...
-    				},
-    				'item_data' : {
-    					*custom data to be exported*
-    				},
-    				'connections' : [
-    					*the names of the nodes this item is connected*
-    				]
-    			}
-    		]
-    	},
-    	...
-    }
+It inherits from Resource and has two variables: nodes and current_node. `current_node` is a dictionary with the data of the current node, while `nodes` is also Dictionary and it's content has the following format:
 
-It is some sort of an adjacency list. It's important to note that it only contains data. It doesn't contain any object, class or resource, only data in the format of dictionaries and arrays of data types.
+```
+	{
+		'node_name': {
+			'editor_data': Dictionary # position, size and other editor informations
+			'blocks': [
+				{
+					'editor_data': Dictionary # filename, size and other editor informations
+					'connections': Array, # If empty, it only carries data
+					'type': String, # Optional categorization of the block, defaults to 'None'
+					'data': Dictionary # data payload returned by get_data method
+				},
+				...
+			]
+		},
+		...
+	}
+```
 
-The key **GraphStart** has information about the initial Node of the Graph.
+It is some sort of an adjacency dictionary. It's important to note that it only contains data. It doesn't contain any object, class or resource, only data in the format of dictionaries and arrays of built-in data types.
 
-**editor_data**  is an Dictionary containing all data that is relevant to the Graph Editor (we will get there) for loading and, you know, editing. But the concept of an editor_data Dictionary is used a lot.
+It is fairly simple. When you have a node's name you use it as key to look for it's data. It will contain all the items it has and the information you've put on them, so you can do whatever you want with it. Then, if the block has a connection, you'll be able to get the next node's name and repeat the process until you're done.
 
-The key **start_node_name**, just as you would expect, has the name of the initial node of the Graph.
+This class also has some methods to help traverse the graph.
 
-The other connections' keys are the name of the nodes. They contain their editor_data (see [GraphNode.g](http://graphnode.gs)d's get_editor_data method to see the actual data it's in it) and an Array of items. Each **Item** has:
+> go_to(node_name: String) -> Dictionary
 
-- Type: when creating an Item Scene inheriting from GraphNodeItem.tscn, you decide what is it's type (a String);
-- Editor data;
-- Item data: data you decide in the Item Scene script (that should inherit from GraphNodeItem.gd) it's content. You must overwrite the method get_item_data() and the method set_item_data(data) in order to define what information will be stored and how it will be loaded by the graph editor;
-- Connections: an Array containing the names of the Nodes this item is connected to.
+Pass the key and the node's data will be returned. It also updates `current_node` variable and make check's to ensure the key exists.
 
-It is fairly simple. When you have a node's name you use it as key to look for it's data. It will contain all the items it has and the information YOU've put on them, so you can do whatever you want with it. Then, if this item has a connection, you'll be able to get the next node's name and repeat the process until you're done doing it. This way it's quite trivial to implement a generic parser for this format. Which I did.
+> get_blocks_by_type(node: = current_node) -> Dictionary
 
-## Parser.gd
-
-With this parser you can use a node's items data to decide on which node to open next and get it's items data. Since the items can be connected to another node you can travel through this connections using the *next_node* method.
-
-### Properties
-
-graph: the current graph resource being parsed
-
-current_node: the current node's name and key.
-
-current_node_data: the current node's data in the format presented above.
-
-### Methods
-
-open_graph(graph_path: String) →bool
-
-You pass the path to a Graph resource and it will load it and open the first node. Returns true if the graph was loaded and false if it fails.
-
-close_graph() → void
-
-Closes the current graph and free it from memory.
-
-go_to_node(node_name: String) → bool
-
-Open a node with the name *node_name.* Returns true if everything works and false if it fails.
-
-next_node(item_id := 0, connection_id := 0) → String
-
-Get the item with id *item_id* from the current_node_data and open the node from the connections array with id connection_id. Returns the new node name if everything works or an empty String if it doesn't.
-
-reset_graph() → void
-
-Goes back to the initial node.
+Get the data of the `PGEBlock`s of the current `PGENode` categorized by type. You can use `blocks_by_type[TypeName]` to get an `Array` of `PGEBlock` datas. A `PGEBlock` without a category specified will be on the **None** category.
